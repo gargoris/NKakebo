@@ -1,6 +1,9 @@
+using System;
+using System.IO;
 using ReactiveUI;
 using System.Reactive;
 using KakeboApp.Core.Interfaces;
+using KakeboApp.Core.Models;
 
 namespace KakeboApp.ViewModels;
 
@@ -19,20 +22,20 @@ public class MobileMainWindowViewModel : ViewModelBase
         ReportsViewModel reportsViewModel)
     {
         _platformService = platformService;
-        
+
         TransactionsViewModel = transactionsViewModel;
         BudgetViewModel = budgetViewModel;
         ReportsViewModel = reportsViewModel;
-        
+
         // En móvil, iniciamos directamente en transacciones si hay DB
         _currentPage = TransactionsViewModel;
-        
+
         // Comandos
         ToggleSidebarCommand = ReactiveCommand.Create(ToggleSidebar);
         ShowTransactionsCommand = ReactiveCommand.Create(() => NavigateTo(TransactionsViewModel, "Transacciones"));
         ShowBudgetCommand = ReactiveCommand.Create(() => NavigateTo(BudgetViewModel, "Presupuesto"));
         ShowReportsCommand = ReactiveCommand.Create(() => NavigateTo(ReportsViewModel, "Reportes"));
-        
+
         // Auto-inicializar base de datos en móvil
         if (_platformService.IsMobile)
         {
@@ -78,18 +81,18 @@ public class MobileMainWindowViewModel : ViewModelBase
         if (IsMobile) IsSidebarVisible = false;
     }
 
-    private async void InitializeMobileDatabase()
+    private void InitializeMobileDatabase()
     {
         try
         {
             var dbPath = _platformService.GetLocalDataPath();
             Directory.CreateDirectory(dbPath);
-            
+
             var config = new DatabaseConfig
             {
                 FilePath = Path.Combine(dbPath, "kakebo.db")
             };
-            
+
             // Conectar automáticamente en móvil
             // await _databaseService.ConnectAsync(config);
         }

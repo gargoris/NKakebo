@@ -1,5 +1,6 @@
 // Views/BudgetView.axaml.cs
 using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
 
 namespace KakeboApp.Views;
 

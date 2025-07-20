@@ -1,3 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using KakeboApp.Core.Interfaces;
+using KakeboApp.Core.Models;
+using KakeboApp.Core.Utils;
+
 namespace KakeboApp.Core.Services;
 
 // Implementación del servicio de transacciones
@@ -131,8 +139,8 @@ public class TransactionService : ITransactionService
     public async Task DeleteTransactionAsync(int transactionId)
     {
         var result = await _database.DeleteTransactionAsync(transactionId);
-        result.Match(
-            _ => { },
+        result.Match<Unit, string>(
+            _ => { return null; },
             error => throw new InvalidOperationException($"Database error: {error}")
         );
     }

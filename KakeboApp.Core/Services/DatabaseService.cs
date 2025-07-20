@@ -1,3 +1,10 @@
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using KakeboApp.Core.Interfaces;
+using KakeboApp.Core.Models;
+using KakeboApp.Core.Utils;
+
 namespace KakeboApp.Core.Services;
 
 // Implementación del servicio de configuración de base de datos

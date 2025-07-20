@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using KakeboApp.Core.Models;
+
 namespace KakeboApp.Core.Utils;
 
 // Extensiones para validación de presupuestos

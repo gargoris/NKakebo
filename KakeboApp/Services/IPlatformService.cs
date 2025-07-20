@@ -1,4 +1,7 @@
 // Services/IPlatformService.cs - Abstracción para funcionalidades específicas de plataforma
+
+using System.Threading.Tasks;
+
 namespace KakeboApp.Core.Interfaces;
 
 public interface IPlatformService

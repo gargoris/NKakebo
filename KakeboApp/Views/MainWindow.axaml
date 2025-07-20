@@ -2,8 +2,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:KakeboApp.ViewModels"
         xmlns:views="using:KakeboApp.Views"
+        xmlns:global="clr-namespace:"
+        xmlns:converters="clr-namespace:KakeboApp.Converters"
         x:Class="KakeboApp.Views.MainWindow"
-        x:DataType="vm:MainWindowViewModel"
+        x:DataType="global:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="Kakebo - Gestión Financiera Japonesa"
         Width="1200"
@@ -13,9 +15,9 @@
 
     <Window.Resources>
         <!-- Convertidores -->
-        <BooleanToIntConverter x:Key="BooleanToIntConverter" />
-        <BooleanToGridLengthConverter x:Key="BooleanToGridLengthConverter" />
-        
+        <converters:BooleanToIntConverter x:Key="BooleanToIntConverter" />
+        <converters:BooleanToGridLengthConverter x:Key="BooleanToGridLengthConverter" />
+
         <!-- Estilos -->
         <Style Selector="Button.sidebar">
             <Setter Property="Background" Value="Transparent"/>
@@ -26,11 +28,11 @@
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
             <Setter Property="FontSize" Value="14"/>
         </Style>
-        
+
         <Style Selector="Button.sidebar:pointerover">
             <Setter Property="Background" Value="#3498DB"/>
         </Style>
-        
+
         <Style Selector="Button.suggestion">
             <Setter Property="Background" Value="#ECF0F1"/>
             <Setter Property="BorderThickness" Value="1"/>
@@ -39,7 +41,7 @@
             <Setter Property="Padding" Value="8,4"/>
             <Setter Property="FontSize" Value="12"/>
         </Style>
-        
+
         <Style Selector="Button.suggestion:pointerover">
             <Setter Property="Background" Value="#3498DB"/>
             <Setter Property="Foreground" Value="White"/>
@@ -50,64 +52,64 @@
         <!-- Sidebar -->
         <Border Grid.Column="0" Background="#2C3E50">
             <StackPanel Margin="0,20">
-                <TextBlock Text="KAKEBO" 
-                          Foreground="White" 
-                          FontSize="24" 
-                          FontWeight="Bold" 
-                          HorizontalAlignment="Center" 
+                <TextBlock Text="KAKEBO"
+                          Foreground="White"
+                          FontSize="24"
+                          FontWeight="Bold"
+                          HorizontalAlignment="Center"
                           Margin="0,0,0,30"/>
-                
+
                 <StackPanel IsVisible="{Binding IsConnected}">
-                    <Button Classes="sidebar" 
-                            Content="📊 Transacciones" 
+                    <Button Classes="sidebar"
+                            Content="📊 Transacciones"
                             Command="{Binding ShowTransactionsCommand}"/>
-                    
-                    <Button Classes="sidebar" 
-                            Content="💰 Presupuesto" 
+
+                    <Button Classes="sidebar"
+                            Content="💰 Presupuesto"
                             Command="{Binding ShowBudgetCommand}"/>
-                    
-                    <Button Classes="sidebar" 
-                            Content="📈 Reportes" 
+
+                    <Button Classes="sidebar"
+                            Content="📈 Reportes"
                             Command="{Binding ShowReportsCommand}"/>
-                    
+
                     <Separator Margin="10,20" Background="#34495E"/>
                 </StackPanel>
-                
-                <Button Classes="sidebar" 
-                        Content="⚙️ Configuración" 
+
+                <Button Classes="sidebar"
+                        Content="⚙️ Configuración"
                         Command="{Binding ShowConnectionCommand}"/>
             </StackPanel>
         </Border>
-        
+
         <!-- Contenido principal -->
-        <ContentControl Grid.Column="1" 
-                       Content="{Binding CurrentPage}" 
+        <ContentControl Grid.Column="1"
+                       Content="{Binding CurrentPage}"
                        Background="#ECF0F1">
-            
+
             <ContentControl.DataTemplates>
-                
+
                 <!-- Database Connection View -->
-                <DataTemplate DataType="vm:DatabaseConnectionViewModel">
+                <DataTemplate DataType="global:DatabaseConnectionViewModel">
                     <views:DatabaseConnectionView />
                 </DataTemplate>
-                
+
                 <!-- Transactions View -->
                 <DataTemplate DataType="vm:TransactionsViewModel">
                     <views:TransactionsView />
                 </DataTemplate>
-                
+
                 <!-- Budget View -->
                 <DataTemplate DataType="vm:BudgetViewModel">
                     <views:BudgetView />
                 </DataTemplate>
-                
+
                 <!-- Reports View -->
-                <DataTemplate DataType="vm:ReportsViewModel">
+                <DataTemplate DataType="global:ReportsViewModel">
                     <views:ReportsView />
                 </DataTemplate>
-                
+
             </ContentControl.DataTemplates>
         </ContentControl>
     </Grid>
-    
+
 </Window>

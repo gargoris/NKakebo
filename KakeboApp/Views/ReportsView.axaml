@@ -2,145 +2,146 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:KakeboApp.ViewModels"
+             xmlns:global="clr-namespace:"
              x:Class="KakeboApp.Views.ReportsView"
-             x:DataType="vm:ReportsViewModel">
+             x:DataType="global:ReportsViewModel">
 
     <ScrollViewer>
         <StackPanel Margin="30" MaxWidth="900">
-            
+
             <!-- Header -->
             <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,0,20">
-                <Button Grid.Column="0" 
-                       Content="◀ Anterior" 
+                <Button Grid.Column="0"
+                       Content="◀ Anterior"
                        Command="{Binding PreviousMonthCommand}"/>
-                
-                <TextBlock Grid.Column="1" 
-                          Text="{Binding MonthYearDisplay}" 
-                          FontSize="24" 
-                          FontWeight="Bold" 
+
+                <TextBlock Grid.Column="1"
+                          Text="{Binding MonthYearDisplay}"
+                          FontSize="24"
+                          FontWeight="Bold"
                           HorizontalAlignment="Center"/>
-                
-                <Button Grid.Column="2" 
-                       Content="{Binding ViewToggleText}" 
+
+                <Button Grid.Column="2"
+                       Content="{Binding ViewToggleText}"
                        Command="{Binding ToggleViewCommand}"
                        Margin="0,0,10,0"/>
-                
-                <Button Grid.Column="3" 
-                       Content="Siguiente ▶" 
+
+                <Button Grid.Column="3"
+                       Content="Siguiente ▶"
                        Command="{Binding NextMonthCommand}"/>
             </Grid>
-            
+
             <!-- Resumen general -->
             <Border Background="White" CornerRadius="8" Padding="20" Margin="0,0,0,20">
                 <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto">
-                    
-                    <TextBlock Grid.ColumnSpan="3" 
-                              Text="Resumen Financiero" 
-                              FontSize="18" 
-                              FontWeight="SemiBold" 
+
+                    <TextBlock Grid.ColumnSpan="3"
+                              Text="Resumen Financiero"
+                              FontSize="18"
+                              FontWeight="SemiBold"
                               Margin="0,0,0,15"/>
-                    
+
                     <StackPanel Grid.Column="0" HorizontalAlignment="Center">
                         <TextBlock Text="Ingresos" FontSize="14" Foreground="Gray" HorizontalAlignment="Center"/>
-                        <TextBlock Text="{Binding BalanceInfo.TotalIncome, StringFormat=C}" 
-                                  FontSize="20" 
-                                  FontWeight="Bold" 
-                                  Foreground="Green" 
+                        <TextBlock Text="{Binding BalanceInfo.TotalIncome, StringFormat=C}"
+                                  FontSize="20"
+                                  FontWeight="Bold"
+                                  Foreground="Green"
                                   HorizontalAlignment="Center"/>
                     </StackPanel>
-                    
+
                     <StackPanel Grid.Column="1" HorizontalAlignment="Center">
                         <TextBlock Text="Gastos" FontSize="14" Foreground="Gray" HorizontalAlignment="Center"/>
-                        <TextBlock Text="{Binding BalanceInfo.TotalExpenses, StringFormat=C}" 
-                                  FontSize="20" 
-                                  FontWeight="Bold" 
-                                  Foreground="Red" 
+                        <TextBlock Text="{Binding BalanceInfo.TotalExpenses, StringFormat=C}"
+                                  FontSize="20"
+                                  FontWeight="Bold"
+                                  Foreground="Red"
                                   HorizontalAlignment="Center"/>
                     </StackPanel>
-                    
+
                     <StackPanel Grid.Column="2" HorizontalAlignment="Center">
                         <TextBlock Text="Balance" FontSize="14" Foreground="Gray" HorizontalAlignment="Center"/>
-                        <TextBlock Text="{Binding BalanceInfo.Balance, StringFormat=C}" 
-                                  FontSize="20" 
-                                  FontWeight="Bold" 
-                                  Foreground="{Binding BalanceInfo.Balance, Converter={StaticResource BalanceToColorConverter}}" 
+                        <TextBlock Text="{Binding BalanceInfo.Balance, StringFormat=C}"
+                                  FontSize="20"
+                                  FontWeight="Bold"
+                                  Foreground="{Binding BalanceInfo.Balance, Converter={StaticResource BalanceToColorConverter}}"
                                   HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Grid>
             </Border>
-            
+
             <!-- Vista por categorías -->
-            <Border Background="White" 
-                   CornerRadius="8" 
-                   Padding="20" 
+            <Border Background="White"
+                   CornerRadius="8"
+                   Padding="20"
                    IsVisible="{Binding !ShowDetailedView}">
-                
+
                 <StackPanel>
-                    <TextBlock Text="Gastos por Categoría" 
-                              FontSize="18" 
-                              FontWeight="SemiBold" 
+                    <TextBlock Text="Gastos por Categoría"
+                              FontSize="18"
+                              FontWeight="SemiBold"
                               Margin="0,0,0,15"/>
-                    
+
                     <DataGrid Items="{Binding ExpensesByCategory}"
                              AutoGenerateColumns="False"
                              GridLinesVisibility="None"
                              HeadersVisibility="Column">
-                        
+
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Categoría" 
-                                               Binding="{Binding Category, Converter={StaticResource CategoryDisplayConverter}}" 
+                            <DataGridTextColumn Header="Categoría"
+                                               Binding="{Binding Category, Converter={StaticResource CategoryDisplayConverter}}"
                                                Width="200"/>
-                            
-                            <DataGridTextColumn Header="Monto" 
-                                               Binding="{Binding Amount, StringFormat=C}" 
+
+                            <DataGridTextColumn Header="Monto"
+                                               Binding="{Binding Amount, StringFormat=C}"
                                                Width="120"/>
-                            
-                            <DataGridTextColumn Header="Porcentaje" 
-                                               Binding="{Binding Percentage, StringFormat=F1}%" 
+
+                            <DataGridTextColumn Header="Porcentaje"
+                                               Binding="{Binding Percentage, StringFormat=F1}%"
                                                Width="100"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </StackPanel>
             </Border>
-            
+
             <!-- Vista detallada -->
-            <Border Background="White" 
-                   CornerRadius="8" 
-                   Padding="20" 
+            <Border Background="White"
+                   CornerRadius="8"
+                   Padding="20"
                    IsVisible="{Binding ShowDetailedView}">
-                
+
                 <StackPanel>
-                    <TextBlock Text="Gastos Detallados por Subcategoría" 
-                              FontSize="18" 
-                              FontWeight="SemiBold" 
+                    <TextBlock Text="Gastos Detallados por Subcategoría"
+                              FontSize="18"
+                              FontWeight="SemiBold"
                               Margin="0,0,0,15"/>
-                    
+
                     <DataGrid Items="{Binding ExpensesBySubcategory}"
                              AutoGenerateColumns="False"
                              GridLinesVisibility="None"
                              HeadersVisibility="Column">
-                        
+
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Categoría" 
-                                               Binding="{Binding Category, Converter={StaticResource CategoryDisplayConverter}}" 
+                            <DataGridTextColumn Header="Categoría"
+                                               Binding="{Binding Category, Converter={StaticResource CategoryDisplayConverter}}"
                                                Width="150"/>
-                            
-                            <DataGridTextColumn Header="Subcategoría" 
-                                               Binding="{Binding Subcategory}" 
+
+                            <DataGridTextColumn Header="Subcategoría"
+                                               Binding="{Binding Subcategory}"
                                                Width="150"/>
-                            
-                            <DataGridTextColumn Header="Monto" 
-                                               Binding="{Binding Amount, StringFormat=C}" 
+
+                            <DataGridTextColumn Header="Monto"
+                                               Binding="{Binding Amount, StringFormat=C}"
                                                Width="120"/>
-                            
-                            <DataGridTextColumn Header="%" 
-                                               Binding="{Binding Percentage, StringFormat=F1}%" 
+
+                            <DataGridTextColumn Header="%"
+                                               Binding="{Binding Percentage, StringFormat=F1}%"
                                                Width="80"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </StackPanel>
             </Border>
-            
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

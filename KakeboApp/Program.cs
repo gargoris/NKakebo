@@ -1,10 +1,13 @@
+using System;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using KakeboApp.Core.Interfaces;
 using KakeboApp.Core.Services;
 using KakeboApp.Core.Data;
+using KakeboApp.Services;
 using KakeboApp.ViewModels;
 using KakeboApp.Views;
 
@@ -28,15 +31,15 @@ public class Program
 public partial class App : Application
 {
     private IHost? _host;
-    
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
-        
+
         _host = CreateHostBuilder().Build();
         _host.Start();
     }
-    
+
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -49,16 +52,16 @@ public partial class App : Application
             var mainView = _host!.Services.GetRequiredService<MainView>();
             singleViewPlatform.MainView = mainView;
         }
-        
+
         base.OnFrameworkInitializationCompleted();
     }
-    
+
     private static IHostBuilder CreateHostBuilder() =>
         Host.CreateDefaultBuilder()
             .ConfigureServices((context, services) =>
             {
                 // Platform services
-                services.AddSingleton<IPlatformService>(sp => 
+                services.AddSingleton<IPlatformService>(sp =>
                 {
 #if ANDROID
                     return new AndroidPlatformService();
@@ -66,13 +69,13 @@ public partial class App : Application
                     return new DesktopPlatformService();
 #endif
                 });
-                
+
                 // Core services
                 services.AddSingleton<IKakeboDatabase, LiteDbKakeboDatabase>();
                 services.AddScoped<IDatabaseService, DatabaseService>();
                 services.AddScoped<ITransactionService, TransactionService>();
                 services.AddScoped<IBudgetService, BudgetService>();
-                
+
                 // ViewModels
                 services.AddTransient<MainWindowViewModel>();
                 services.AddTransient<DatabaseConnectionViewModel>();
@@ -80,7 +83,7 @@ public partial class App : Application
                 services.AddTransient<AddEditTransactionViewModel>();
                 services.AddTransient<BudgetViewModel>();
                 services.AddTransient<ReportsViewModel>();
-                
+
                 // Views
                 services.AddTransient<MainWindow>();
                 services.AddTransient<MainView>();

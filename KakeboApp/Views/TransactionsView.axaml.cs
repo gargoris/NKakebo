@@ -1,4 +1,6 @@
 // Views/TransactionsView.axaml.cs
+
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using KakeboApp.ViewModels;
@@ -15,7 +17,7 @@ public partial class TransactionsView : UserControl
 
     private void DataGrid_DoubleTapped(object sender, Avalonia.Input.TappedEventArgs e)
     {
-        if (sender is DataGrid grid && 
+        if (sender is DataGrid grid &&
             grid.SelectedItem is Transaction transaction &&
             DataContext is TransactionsViewModel viewModel)
         {
@@ -25,7 +27,7 @@ public partial class TransactionsView : UserControl
 
     private async void DeleteTransaction_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button button && 
+        if (sender is Button button &&
             button.CommandParameter is Transaction transaction &&
             DataContext is TransactionsViewModel viewModel)
         {

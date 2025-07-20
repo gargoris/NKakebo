@@ -1,7 +1,10 @@
 // Converters.cs - Value Converters for Avalonia
+
+using System;
 using Avalonia.Data.Converters;
 using Avalonia;
 using System.Globalization;
+using Avalonia.Controls;
 using KakeboApp.Core.Models;
 using KakeboApp.Core.Utils;
 
@@ -19,10 +22,10 @@ public class BooleanToGridLengthConverter : IValueConverter
                 var falseValue = parts[0];
                 var trueValue = parts[1];
                 var selectedValue = boolValue ? trueValue : falseValue;
-                
+
                 if (selectedValue == "0" || selectedValue == "Auto")
                     return GridLength.Auto;
-                
+
                 if (double.TryParse(selectedValue, out var length))
                     return new GridLength(length);
             }

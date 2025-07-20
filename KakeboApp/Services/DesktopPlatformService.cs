@@ -1,3 +1,8 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Platform.Storage;
 using Avalonia.Controls.ApplicationLifetimes;
 using KakeboApp.Core.Interfaces;
@@ -42,6 +47,6 @@ public class DesktopPlatformService : IPlatformService
         return file?.Path.LocalPath;
     }
 
-    public string GetDatabasePath() => 
+    public string GetDatabasePath() =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "KakeboApp");
 }

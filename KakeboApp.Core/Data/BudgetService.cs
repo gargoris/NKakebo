@@ -1,3 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using KakeboApp.Core.Interfaces;
+using KakeboApp.Core.Models;
+
 namespace KakeboApp.Core.Services;
 
 // Implementación del servicio de presupuesto

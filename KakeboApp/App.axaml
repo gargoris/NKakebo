@@ -1,11 +1,13 @@
 <!-- App.axaml -->
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:KakeboApp.Converters"
+             xmlns:reactiveUi="clr-namespace:ReactiveUI;assembly=ReactiveUI"
              x:Class="KakeboApp.App"
              RequestedThemeVariant="Default">
 
     <Application.DataTemplates>
-        <local:ViewLocator/>
+        <reactiveUi:ViewLocator/>
     </Application.DataTemplates>
 
     <Application.Styles>
@@ -15,10 +17,10 @@
 
     <Application.Resources>
         <!-- Global Converters -->
-        <convert:BooleanToGridLengthConverter x:Key="BooleanToGridLengthConverter"/>
-        <convert:BooleanToIntConverter x:Key="BooleanToIntConverter"/>
-        <convert:TransactionTypeToColorConverter x:Key="TransactionTypeToColorConverter"/>
-        <convert:BalanceToColorConverter x:Key="BalanceToColorConverter"/>
-        <convert:CategoryDisplayConverter x:Key="CategoryDisplayConverter"/>
+        <converters:BooleanToGridLengthConverter x:Key="BooleanToGridLengthConverter"/>
+        <converters:BooleanToIntConverter x:Key="BooleanToIntConverter"/>
+        <converters:TransactionTypeToColorConverter x:Key="TransactionTypeToColorConverter"/>
+        <converters:BalanceToColorConverter x:Key="BalanceToColorConverter"/>
+        <converters:CategoryDisplayConverter x:Key="CategoryDisplayConverter"/>
     </Application.Resources>
 </Application>

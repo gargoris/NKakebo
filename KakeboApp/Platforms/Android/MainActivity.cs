@@ -1,6 +1,7 @@
 // Platforms/Android/MainActivity.cs
 using Android.App;
 using Android.Content.PM;
+using Avalonia;
 using Avalonia.Android;
 
 namespace KakeboApp.Android;

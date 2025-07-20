@@ -1,4 +1,7 @@
+using System;
 using System.ComponentModel.DataAnnotations;
+using System.Threading.Tasks;
+using KakeboApp.Core.Utils;
 
 namespace KakeboApp.Core.Models;
 
@@ -17,7 +20,7 @@ public enum Category
     Freelance,
     Business,
     Gifts,
-    
+
     // Gastos de supervivencia
     Housing,
     Food,
@@ -25,7 +28,7 @@ public enum Category
     Utilities,
     Healthcare,
     Insurance,
-    
+
     // Gastos opcionales
     Entertainment,
     Dining,
@@ -33,13 +36,13 @@ public enum Category
     Hobbies,
     Travel,
     Sports,
-    
+
     // Cultura
     Books,
     Education,
     Courses,
     Subscriptions,
-    
+
     // Inesperados
     Emergency,
     Repairs,
@@ -60,26 +63,26 @@ public enum KakeboCategory
 public record Transaction
 {
     public int? Id { get; init; }
-    
+
     [Required]
     [StringLength(200)]
     public required string Description { get; init; }
-    
+
     [Range(0.01, double.MaxValue)]
     public required decimal Amount { get; init; }
-    
+
     public required DateTime Date { get; init; }
-    
+
     public required TransactionType Type { get; init; }
-    
+
     public required Category Category { get; init; }
-    
+
     [StringLength(100)]
     public string? Subcategory { get; init; }
-    
+
     [StringLength(500)]
     public string? Notes { get; init; }
-    
+
     // Propiedades calculadas
     public KakeboCategory KakeboCategory => CategoryUtils.GetKakeboCategory(Category);
     public string CategoryDisplayName => CategoryUtils.GetCategoryDisplayName(Category);
@@ -113,22 +116,22 @@ public abstract record Result<T>
 {
     public record Success(T Value) : Result<T>;
     public record Error(string Message) : Result<T>;
-    
+
     public bool IsSuccess => this is Success;
     public bool IsError => this is Error;
-    
-    public T GetValue() => this is Success success ? success.Value : 
+
+    public T GetValue() => this is Success success ? success.Value :
         throw new InvalidOperationException("Cannot get value from error result");
-    
-    public string GetError() => this is Error error ? error.Message : 
+
+    public string GetError() => this is Error error ? error.Message :
         throw new InvalidOperationException("Cannot get error from success result");
 }
 
 // Extension methods para trabajar con Result<T>
 public static class ResultExtensions
 {
-    public static TResult Match<T, TResult>(this Result<T> result, 
-        Func<T, TResult> onSuccess, 
+    public static TResult Match<T, TResult>(this Result<T> result,
+        Func<T, TResult> onSuccess,
         Func<string, TResult> onError)
     {
         return result switch
@@ -138,8 +141,8 @@ public static class ResultExtensions
             _ => throw new ArgumentOutOfRangeException()
         };
     }
-    
-    public static async Task<Result<TResult>> MapAsync<T, TResult>(this Result<T> result, 
+
+    public static async Task<Result<TResult>> MapAsync<T, TResult>(this Result<T> result,
         Func<T, Task<TResult>> mapper)
     {
         return result switch
@@ -149,8 +152,8 @@ public static class ResultExtensions
             _ => throw new ArgumentOutOfRangeException()
         };
     }
-    
-    public static Result<TResult> Map<T, TResult>(this Result<T> result, 
+
+    public static Result<TResult> Map<T, TResult>(this Result<T> result,
         Func<T, TResult> mapper)
     {
         return result switch
