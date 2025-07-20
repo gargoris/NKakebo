@@ -1,0 +1,80 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:KakeboApp.ViewModels"
+             x:Class="KakeboApp.Views.DatabaseConnectionView"
+             x:DataType="vm:DatabaseConnectionViewModel">
+
+    <Border Background="White" 
+            Margin="50" 
+            CornerRadius="10" 
+            BoxShadow="0 5 15 0 #40000000">
+        
+        <StackPanel Margin="40" MaxWidth="400">
+            
+            <TextBlock Text="Configuración de Base de Datos" 
+                      FontSize="24" 
+                      FontWeight="Bold" 
+                      Margin="0,0,0,30" 
+                      HorizontalAlignment="Center"/>
+            
+            <!-- Ruta de base de datos -->
+            <TextBlock Text="Archivo de Base de Datos:" 
+                      FontWeight="SemiBold" 
+                      Margin="0,0,0,5"/>
+            
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBox Grid.Column="0" 
+                        Text="{Binding DatabasePath}" 
+                        Watermark="Selecciona o crea un archivo .db"
+                        IsEnabled="{Binding !IsConnecting}"/>
+                
+                <Button Grid.Column="1" 
+                       Content="Buscar" 
+                       Command="{Binding BrowseFileCommand}"
+                       Margin="5,0,0,0"
+                       Padding="15,8"/>
+            </Grid>
+            
+            <!-- Contraseña opcional -->
+            <TextBlock Text="Contraseña (Opcional):" 
+                      FontWeight="SemiBold" 
+                      Margin="0,20,0,5"/>
+            
+            <TextBox Text="{Binding Password}" 
+                    PasswordChar="*" 
+                    Watermark="Dejar vacío para sin contraseña"
+                    IsEnabled="{Binding !IsConnecting}"/>
+            
+            <!-- Mensaje de error -->
+            <TextBlock Text="{Binding ErrorMessage}" 
+                      Foreground="Red" 
+                      Margin="0,10,0,0" 
+                      TextWrapping="Wrap"
+                      IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            
+            <!-- Botones -->
+            <Grid ColumnDefinitions="*,*" Margin="0,30,0,0">
+                <Button Grid.Column="0" 
+                       Content="Crear Nueva" 
+                       Command="{Binding CreateNewCommand}"
+                       Margin="0,0,5,0"
+                       Padding="0,12"/>
+                
+                <Button Grid.Column="1" 
+                       Content="{Binding IsConnecting, Converter={x:Static BooleanToStringConverter.Instance}, ConverterParameter='Conectando...|Conectar'}"
+                       Command="{Binding ConnectCommand}"
+                       Margin="5,0,0,0"
+                       Padding="0,12"
+                       Background="#3498DB"
+                       Foreground="White"/>
+            </Grid>
+            
+            <!-- Indicador de carga -->
+            <ProgressBar IsIndeterminate="{Binding IsConnecting}" 
+                        IsVisible="{Binding IsConnecting}"
+                        Margin="0,20,0,0"/>
+            
+        </StackPanel>
+    </Border>
+
+</UserControl>

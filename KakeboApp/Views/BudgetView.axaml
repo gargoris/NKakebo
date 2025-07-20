@@ -1,0 +1,148 @@
+<!-- BudgetView.axaml -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:KakeboApp.ViewModels"
+             x:Class="KakeboApp.Views.BudgetView"
+             x:DataType="vm:BudgetViewModel">
+
+    <ScrollViewer>
+        <StackPanel Margin="30" MaxWidth="800">
+            
+            <!-- Header con navegación -->
+            <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,30">
+                <Button Grid.Column="0" 
+                       Content="◀ Anterior" 
+                       Command="{Binding PreviousMonthCommand}"/>
+                
+                <TextBlock Grid.Column="1" 
+                          Text="{Binding MonthYearDisplay}" 
+                          FontSize="24" 
+                          FontWeight="Bold" 
+                          HorizontalAlignment="Center"/>
+                
+                <Button Grid.Column="2" 
+                       Content="Siguiente ▶" 
+                       Command="{Binding NextMonthCommand}"/>
+            </Grid>
+            
+            <!-- Presupuesto planificado -->
+            <Border Background="White" CornerRadius="8" Padding="20" Margin="0,0,0,20">
+                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                    
+                    <TextBlock Grid.ColumnSpan="2" 
+                              Text="Presupuesto Mensual" 
+                              FontSize="18" 
+                              FontWeight="SemiBold" 
+                              Margin="0,0,0,15"/>
+                    
+                    <TextBlock Grid.Row="1" Text="Ingresos Planificados:" VerticalAlignment="Center"/>
+                    <NumericUpDown Grid.Row="1" Grid.Column="1" 
+                                  Value="{Binding PlannedIncome}" 
+                                  FormatString="C" 
+                                  Margin="10,5"/>
+                    
+                    <TextBlock Grid.Row="2" Text="Supervivencia:" VerticalAlignment="Center"/>
+                    <NumericUpDown Grid.Row="2" Grid.Column="1" 
+                                  Value="{Binding SurvivalBudget}" 
+                                  FormatString="C" 
+                                  Margin="10,5"/>
+                    
+                    <TextBlock Grid.Row="3" Text="Opcional:" VerticalAlignment="Center"/>
+                    <NumericUpDown Grid.Row="3" Grid.Column="1" 
+                                  Value="{Binding OptionalBudget}" 
+                                  FormatString="C" 
+                                  Margin="10,5"/>
+                    
+                    <TextBlock Grid.Row="4" Text="Cultura:" VerticalAlignment="Center"/>
+                    <NumericUpDown Grid.Row="4" Grid.Column="1" 
+                                  Value="{Binding CultureBudget}" 
+                                  FormatString="C" 
+                                  Margin="10,5"/>
+                    
+                    <TextBlock Grid.Row="5" Text="Inesperado:" VerticalAlignment="Center"/>
+                    <NumericUpDown Grid.Row="5" Grid.Column="1" 
+                                  Value="{Binding UnexpectedBudget}" 
+                                  FormatString="C" 
+                                  Margin="10,5"/>
+                    
+                    <Button Grid.Row="6" Grid.ColumnSpan="2" 
+                           Content="Guardar Presupuesto" 
+                           Command="{Binding SaveBudgetCommand}"
+                           Background="#3498DB" 
+                           Foreground="White" 
+                           Margin="0,15,0,0"/>
+                </Grid>
+            </Border>
+            
+            <!-- Gastos reales vs presupuesto -->
+            <Border Background="White" CornerRadius="8" Padding="20" Margin="0,0,0,20">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+                    
+                    <TextBlock Grid.ColumnSpan="4" 
+                              Text="Gastos Reales vs Presupuesto" 
+                              FontSize="18" 
+                              FontWeight="SemiBold" 
+                              Margin="0,0,0,15"/>
+                    
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Categoría" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="Presupuesto" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="Real" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Row="1" Grid.Column="3" Text="Estado" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                    
+                    <TextBlock Grid.Row="2" Text="Supervivencia"/>
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SurvivalBudget, StringFormat=C}" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding ActualExpenses.Survival, StringFormat=C}" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Row="2" Grid.Column="3" 
+                              Text="{Binding IsSurvivalOverBudget, Converter={x:Static BooleanToStringConverter.Instance}, ConverterParameter='❌|✅'}" 
+                              HorizontalAlignment="Right"/>
+                    
+                    <TextBlock Grid.Row="3" Text="Opcional"/>
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding OptionalBudget, StringFormat=C}" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding ActualExpenses.Optional, StringFormat=C}" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Row="3" Grid.Column="3" 
+                              Text="{Binding IsOptionalOverBudget, Converter={x:Static BooleanToStringConverter.Instance}, ConverterParameter='❌|✅'}" 
+                              HorizontalAlignment="Right"/>
+                    
+                    <TextBlock Grid.Row="4" Text="Cultura"/>
+                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding CultureBudget, StringFormat=C}" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding ActualExpenses.Culture, StringFormat=C}" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Row="4" Grid.Column="3" 
+                              Text="{Binding IsCultureOverBudget, Converter={x:Static BooleanToStringConverter.Instance}, ConverterParameter='❌|✅'}" 
+                              HorizontalAlignment="Right"/>
+                </Grid>
+            </Border>
+            
+            <!-- Resumen financiero -->
+            <Border Background="White" CornerRadius="8" Padding="20">
+                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto">
+                    
+                    <TextBlock Grid.ColumnSpan="2" 
+                              Text="Resumen del Mes" 
+                              FontSize="18" 
+                              FontWeight="SemiBold" 
+                              Margin="0,0,0,15"/>
+                    
+                    <TextBlock Grid.Row="1" Text="Ingresos Totales:"/>
+                    <TextBlock Grid.Row="1" Grid.Column="1" 
+                              Text="{Binding BalanceInfo.TotalIncome, StringFormat=C}" 
+                              HorizontalAlignment="Right" 
+                              Foreground="Green"/>
+                    
+                    <TextBlock Grid.Row="2" Text="Gastos Totales:"/>
+                    <TextBlock Grid.Row="2" Grid.Column="1" 
+                              Text="{Binding BalanceInfo.TotalExpenses, StringFormat=C}" 
+                              HorizontalAlignment="Right" 
+                              Foreground="Red"/>
+                    
+                    <TextBlock Grid.Row="3" Text="Balance:" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Row="3" Grid.Column="1" 
+                              Text="{Binding BalanceInfo.Balance, StringFormat=C}" 
+                              HorizontalAlignment="Right" 
+                              FontWeight="SemiBold"
+                              Foreground="{Binding BalanceInfo.Balance, Converter={StaticResource BalanceToColorConverter}}"/>
+                </Grid>
+            </Border>
+            
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

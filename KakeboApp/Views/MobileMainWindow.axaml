@@ -1,0 +1,70 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:KakeboApp.ViewModels"
+        x:Class="KakeboApp.Views.MobileMainWindow"
+        x:DataType="vm:MobileMainWindowViewModel"
+        Title="{Binding PageTitle}"
+        Background="#ECF0F1">
+
+    <Grid RowDefinitions="Auto,*">
+        
+        <!-- Top Bar para móvil -->
+        <Border Grid.Row="0" 
+                Background="#2C3E50" 
+                Height="60"
+                IsVisible="{Binding IsMobile}">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Button Grid.Column="0" 
+                        Content="☰" 
+                        Command="{Binding ToggleSidebarCommand}"
+                        Background="Transparent" 
+                        Foreground="White" 
+                        FontSize="20"
+                        Padding="15"/>
+                
+                <TextBlock Grid.Column="1" 
+                          Text="{Binding PageTitle}" 
+                          Foreground="White" 
+                          FontSize="18" 
+                          FontWeight="SemiBold"
+                          VerticalAlignment="Center" 
+                          HorizontalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- Content Area -->
+        <Grid Grid.Row="1" ColumnDefinitions="{Binding IsMobile, Converter={StaticResource MobileLayoutConverter}}">
+            
+            <!-- Sidebar -->
+            <Border Grid.Column="0" 
+                   Background="#2C3E50"
+                   IsVisible="{Binding IsSidebarVisible, FallbackValue=True}">
+                <StackPanel Margin="0,20">
+                    <TextBlock Text="KAKEBO" 
+                              Foreground="White" 
+                              FontSize="24" 
+                              FontWeight="Bold" 
+                              HorizontalAlignment="Center" 
+                              Margin="0,0,0,30"
+                              IsVisible="{Binding !IsMobile}"/>
+                    
+                    <Button Classes="sidebar" 
+                            Content="📊 Transacciones" 
+                            Command="{Binding ShowTransactionsCommand}"/>
+                    
+                    <Button Classes="sidebar" 
+                            Content="💰 Presupuesto" 
+                            Command="{Binding ShowBudgetCommand}"/>
+                    
+                    <Button Classes="sidebar" 
+                            Content="📈 Reportes" 
+                            Command="{Binding ShowReportsCommand}"/>
+                </StackPanel>
+            </Border>
+            
+            <!-- Main Content -->
+            <ContentControl Grid.Column="{Binding IsMobile, Converter={StaticResource BooleanToIntConverter}, ConverterParameter='0|0'}" 
+                           Content="{Binding CurrentPage}"/>
+        </Grid>
+    </Grid>
+</Window>

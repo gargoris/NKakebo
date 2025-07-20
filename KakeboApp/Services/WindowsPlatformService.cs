@@ -1,0 +1,50 @@
+using Avalonia.Controls;
+using Avalonia.Platform.Storage;
+using KakeboApp.Core.Interfaces;
+
+namespace KakeboApp.Platforms.Windows;
+
+public class WindowsPlatformService : IPlatformService
+{
+    public bool IsMobile => false;
+
+    public async Task<string?> PickFileAsync(string title, params string[] extensions)
+    {
+        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+        if (topLevel?.StorageProvider is not { } provider) return null;
+
+        var files = await provider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = title,
+            AllowMultiple = false,
+            FileTypeFilter = extensions.Select(ext => new FilePickerFileType("Database")
+            {
+                Patterns = new[] { $"*.{ext}" }
+            }).ToArray()
+        });
+
+        return files.FirstOrDefault()?.Path.LocalPath;
+    }
+
+    public async Task<string?> SaveFileAsync(string title, string defaultName, params string[] extensions)
+    {
+        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+        if (topLevel?.StorageProvider is not { } provider) return null;
+
+        var file = await provider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = title,
+            SuggestedFileName = defaultName,
+            DefaultExtension = extensions.FirstOrDefault(),
+            FileTypeChoices = extensions.Select(ext => new FilePickerFileType("Database")
+            {
+                Patterns = new[] { $"*.{ext}" }
+            }).ToArray()
+        });
+
+        return file?.Path.LocalPath;
+    }
+
+    public string GetLocalDataPath() => 
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "KakeboApp");
+}

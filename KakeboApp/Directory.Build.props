@@ -1,0 +1,11 @@
+<!-- Directory.Build.props -->
+<Project>
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <WarningsAsErrors />
+        <WarningsNotAsErrors>NU1701</WarningsNotAsErrors>
+    </PropertyGroup>
+</Project>
