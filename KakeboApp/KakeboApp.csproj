@@ -36,6 +36,8 @@
     <ProjectReference Include="..\KakeboApp.Core\KakeboApp.Core.csproj" />
 </ItemGroup>
 
+<!-- Elimina la inclusión manual de recursos XAML para evitar duplicados -->
+
 <!-- Configuración específica de plataforma -->
 <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>

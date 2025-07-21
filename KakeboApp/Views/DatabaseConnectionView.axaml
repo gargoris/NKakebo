@@ -32,7 +32,7 @@
                 <Button Grid.Column="1"
                        Content="Buscar"
                        Command="{Binding BrowseFileCommand}"
-                       CommandParameter="{Binding $this, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                       CommandParameter="{Binding $parent[UserControl]}"
                        Margin="5,0,0,0"
                        Padding="15,8"/>
             </Grid>
@@ -59,7 +59,7 @@
                 <Button Grid.Column="0"
                        Content="Crear Nueva"
                        Command="{Binding CreateNewCommand}"
-                       CommandParameter="{Binding $this, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                       CommandParameter="{Binding $parent[UserControl]}"
                        Margin="0,0,5,0"
                        Padding="0,12"/>
 

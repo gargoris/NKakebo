@@ -10,4 +10,9 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = viewModel;
     }
+
+    public MainWindow()
+    {
+        InitializeComponent();
+    }
 }
