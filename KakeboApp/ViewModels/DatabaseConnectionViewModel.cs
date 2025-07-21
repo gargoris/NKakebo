@@ -3,8 +3,10 @@ using System.Reactive;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
+using KakeboApp.Commands;
 using KakeboApp.Core.Interfaces;
 using KakeboApp.Core.Models;
 using ReactiveUI;
@@ -27,10 +29,10 @@ public class DatabaseConnectionViewModel : ViewModelBase
         _databaseService = databaseService;
         _platformService = platformService;
 
-        // Comandos sin scheduler específico para evitar problemas de threading
-        BrowseFileCommand = ReactiveCommand.CreateFromTask<UserControl>(BrowseFile);
-        CreateNewCommand = ReactiveCommand.CreateFromTask<UserControl>(CreateNew);
-        ConnectCommand = ReactiveCommand.CreateFromTask(Connect);
+        // Comandos usando ICommand simple para evitar problemas de threading con ReactiveCommand
+        BrowseFileCommand = new AsyncCommand<UserControl>(BrowseFile, _ => !IsConnecting);
+        CreateNewCommand = new AsyncCommand<UserControl>(CreateNew, _ => !IsConnecting);
+        ConnectCommand = new AsyncCommand(Connect, () => !IsConnecting);
 
         // Configurar ruta inicial
         var defaultPath = System.IO.Path.Combine(_platformService.GetLocalDataPath(), "kakebo.db");
@@ -93,22 +95,36 @@ public class DatabaseConnectionViewModel : ViewModelBase
             if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
             {
                 this.RaiseAndSetIfChanged(ref _isConnecting, value);
+                NotifyCanExecuteChanged();
             }
             else
             {
-                Avalonia.Threading.Dispatcher.UIThread.Post(() => this.RaiseAndSetIfChanged(ref _isConnecting, value));
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    this.RaiseAndSetIfChanged(ref _isConnecting, value);
+                    NotifyCanExecuteChanged();
+                });
             }
         }
     }
 
-    public ReactiveCommand<UserControl, Unit> BrowseFileCommand { get; }
-    public ReactiveCommand<UserControl, Unit> CreateNewCommand { get; }
-    public ReactiveCommand<Unit, Unit> ConnectCommand { get; }
+    public ICommand BrowseFileCommand { get; }
+    public ICommand CreateNewCommand { get; }
+    public ICommand ConnectCommand { get; }
 
     public IObservable<Unit> DatabaseConnected => _databaseConnected.AsObservable();
 
-    private async Task BrowseFile(UserControl control)
+    private void NotifyCanExecuteChanged()
     {
+        (BrowseFileCommand as AsyncCommand<UserControl>)?.RaiseCanExecuteChanged();
+        (CreateNewCommand as AsyncCommand<UserControl>)?.RaiseCanExecuteChanged();
+        (ConnectCommand as AsyncCommand)?.RaiseCanExecuteChanged();
+    }
+
+    private async Task BrowseFile(UserControl? control)
+    {
+        if (control == null) return;
+        
         try
         {
             var topLevel = TopLevel.GetTopLevel(control);
@@ -134,8 +150,10 @@ public class DatabaseConnectionViewModel : ViewModelBase
         }
     }
 
-    private async Task CreateNew(UserControl control)
+    private async Task CreateNew(UserControl? control)
     {
+        if (control == null) return;
+        
         try
         {
             var topLevel = TopLevel.GetTopLevel(control);
