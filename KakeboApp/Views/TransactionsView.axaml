@@ -2,34 +2,34 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:KakeboApp.ViewModels"
              xmlns:models="using:KakeboApp.Core.Models"
+             xmlns:converters="using:KakeboApp.Converters"
              x:Class="KakeboApp.Views.TransactionsView"
              x:DataType="vm:TransactionsViewModel">
 
-    <Grid ColumnDefinitions="*,{Binding IsEditPanelVisible, Converter={StaticResource BooleanToGridLengthConverter}, ConverterParameter='0|350'}">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="350"/>
+        </Grid.ColumnDefinitions>
         
         <!-- Lista principal -->
         <Grid Grid.Column="0" RowDefinitions="Auto,*">
             
             <!-- Header con filtros -->
-            <Border Grid.Row="0" Background="White" Padding="20,15" BoxShadow="0 2 5 0 #20000000">
-                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
-                    
-                    <Button Grid.Column="0" 
-                           Content="➕ Nueva Transacción" 
+            <Border Grid.Row="0" Background="White" Padding="20,15">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Button Content="Nueva Transacción" 
                            Command="{Binding AddTransactionCommand}"
                            Background="#27AE60" 
                            Foreground="White" 
                            Padding="15,8"/>
                     
-                    <TextBox Grid.Column="1" 
-                            Text="{Binding SearchText}" 
-                            Watermark="Buscar transacciones..." 
-                            Margin="15,0"/>
+                    <TextBox Text="{Binding SearchText}" 
+                            Watermark="Buscar..." 
+                            Width="200"/>
                     
-                    <ComboBox Grid.Column="2" 
-                             SelectedItem="{Binding FilterType}" 
+                    <ComboBox SelectedItem="{Binding FilterType}" 
                              PlaceholderText="Tipo" 
-                             Margin="5,0"
                              Width="100">
                         <ComboBox.Items>
                             <x:Null/>
@@ -38,31 +38,14 @@
                         </ComboBox.Items>
                     </ComboBox>
                     
-                    <ComboBox Grid.Column="3" 
-                             SelectedItem="{Binding FilterCategory}" 
-                             PlaceholderText="Categoría" 
-                             Margin="5,0"
-                             Width="150">
-                        <ComboBox.Items>
-                            <x:Null/>
-                        </ComboBox.Items>
-                        <ComboBox.ItemsSource>
-                            <MultiBinding Converter="{StaticResource CategoryListConverter}">
-                                <Binding Source="{x:Static models:Category.Salary}"/>
-                            </MultiBinding>
-                        </ComboBox.ItemsSource>
-                    </ComboBox>
-                    
-                    <Button Grid.Column="4" 
-                           Content="🔄" 
-                           Command="{Binding RefreshDataCommand}" 
-                           Margin="5,0"/>
-                </Grid>
+                    <Button Content="Actualizar" 
+                           Command="{Binding RefreshDataCommand}"/>
+                </StackPanel>
             </Border>
             
             <!-- Lista de transacciones -->
             <DataGrid Grid.Row="1" 
-                     Items="{Binding FilteredTransactions}"
+                     ItemsSource="{Binding FilteredTransactions}"
                      SelectedItem="{Binding SelectedTransaction}"
                      AutoGenerateColumns="False"
                      GridLinesVisibility="Horizontal"
@@ -84,150 +67,22 @@
                     
                     <DataGridTextColumn Header="Monto" 
                                        Binding="{Binding Amount, StringFormat=C}" 
-                                       Width="100">
-                        <DataGridTextColumn.CellStyle>
-                            <Style TargetType="DataGridCell">
-                                <Setter Property="Foreground" 
-                                       Value="{Binding Type, Converter={StaticResource TransactionTypeToColorConverter}}"/>
-                            </Style>
-                        </DataGridTextColumn.CellStyle>
-                    </DataGridTextColumn>
+                                       Width="100"/>
                     
                     <DataGridTextColumn Header="Tipo" 
                                        Binding="{Binding Type}" 
                                        Width="80"/>
-                    
-                    <DataGridTemplateColumn Header="Acciones" Width="120">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Button Content="✏️" 
-                                           Command="{Binding $parent[UserControl].DataContext.EditTransactionCommand}"
-                                           CommandParameter="{Binding}"
-                                           Background="Transparent"
-                                           Padding="5"/>
-                                    
-                                    <Button Content="🗑️" 
-                                           Command="{Binding $parent[UserControl].DataContext.DeleteTransactionCommand}"
-                                           CommandParameter="{Binding}"
-                                           Background="Transparent"
-                                           Foreground="Red"
-                                           Padding="5"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
         </Grid>
         
-        <!-- Panel de edición -->
+        <!-- Panel de edición placeholder -->
         <Border Grid.Column="1" 
-               Background="White" 
-               BoxShadow="-2 0 10 0 #20000000"
-               IsVisible="{Binding IsEditPanelVisible}">
-            
-            <ScrollViewer>
-                <StackPanel Margin="20" DataContext="{Binding AddEditViewModel}">
-                    
-                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,20">
-                        <TextBlock Grid.Column="0" 
-                                  Text="{Binding IsEditing, Converter={x:Static BooleanToStringConverter.Instance}, ConverterParameter='Editar Transacción|Nueva Transacción'}" 
-                                  FontSize="18" 
-                                  FontWeight="SemiBold"/>
-                        
-                        <Button Grid.Column="1" 
-                               Content="✕" 
-                               Command="{Binding $parent[UserControl].DataContext.CloseEditPanelCommand}"
-                               Background="Transparent"/>
-                    </Grid>
-                    
-                    <!-- Formulario -->
-                    <TextBlock Text="Descripción:" Margin="0,0,0,5"/>
-                    <TextBox Text="{Binding Description}" 
-                            Watermark="Descripción de la transacción" 
-                            Margin="0,0,0,15"/>
-                    
-                    <TextBlock Text="Monto:" Margin="0,0,0,5"/>
-                    <NumericUpDown Value="{Binding Amount}" 
-                                  Minimum="0" 
-                                  FormatString="C" 
-                                  Margin="0,0,0,15"/>
-                    
-                    <TextBlock Text="Fecha:" Margin="0,0,0,5"/>
-                    <DatePicker SelectedDate="{Binding Date}" 
-                               Margin="0,0,0,15"/>
-                    
-                    <TextBlock Text="Tipo:" Margin="0,0,0,5"/>
-                    <ComboBox SelectedItem="{Binding Type}" 
-                             Margin="0,0,0,15">
-                        <models:TransactionType>Income</models:TransactionType>
-                        <models:TransactionType>Expense</models:TransactionType>
-                    </ComboBox>
-                    
-                    <TextBlock Text="Categoría:" Margin="0,0,0,5"/>
-                    <ComboBox SelectedItem="{Binding Category}" 
-                             ItemsSource="{Binding ValidCategories}"
-                             Margin="0,0,0,15"/>
-                    
-                    <TextBlock Text="Subcategoría:" Margin="0,0,0,5"/>
-                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,10">
-                        <TextBox Grid.Column="0" 
-                                Text="{Binding Subcategory}" 
-                                Watermark="Subcategoría (opcional)"/>
-                        <Button Grid.Column="1" 
-                               Content="🗑️" 
-                               Command="{Binding ClearSubcategoryCommand}"
-                               Background="Transparent"
-                               Margin="5,0,0,0"/>
-                    </Grid>
-                    
-                    <!-- Sugerencias -->
-                    <TextBlock Text="Sugerencias:" 
-                              Margin="0,0,0,5"
-                              IsVisible="{Binding SuggestedSubcategories.Count}"/>
-                    
-                    <ItemsControl Items="{Binding SuggestedSubcategories}" 
-                                 Margin="0,0,0,15">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button Content="{Binding}" 
-                                       Classes="suggestion"
-                                       Command="{Binding $parent[UserControl].DataContext.SelectSubcategoryCommand}"
-                                       CommandParameter="{Binding}"/>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    
-                    <TextBlock Text="Notas:" Margin="0,0,0,5"/>
-                    <TextBox Text="{Binding Notes}" 
-                            AcceptsReturn="True" 
-                            Height="80" 
-                            Watermark="Notas adicionales (opcional)"
-                            Margin="0,0,0,20"/>
-                    
-                    <!-- Botones -->
-                    <Grid ColumnDefinitions="*,*">
-                        <Button Grid.Column="0" 
-                               Content="Cancelar" 
-                               Command="{Binding CancelCommand}"
-                               Margin="0,0,5,0"/>
-                        
-                        <Button Grid.Column="1" 
-                               Content="Guardar" 
-                               Command="{Binding SaveCommand}"
-                               Background="#27AE60" 
-                               Foreground="White"
-                               Margin="5,0,0,0"/>
-                    </Grid>
-                    
-                </StackPanel>
-            </ScrollViewer>
+               Background="LightGray" 
+               Padding="20">
+            <TextBlock Text="Panel de edición"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"/>
         </Border>
     </Grid>
 

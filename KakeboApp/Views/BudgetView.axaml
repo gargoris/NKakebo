@@ -2,6 +2,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:KakeboApp.ViewModels"
+             xmlns:converters="using:KakeboApp.Converters"
              x:Class="KakeboApp.Views.BudgetView"
              x:DataType="vm:BudgetViewModel">
 
@@ -93,21 +94,21 @@
                     <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SurvivalBudget, StringFormat=C}" HorizontalAlignment="Right"/>
                     <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding ActualExpenses.Survival, StringFormat=C}" HorizontalAlignment="Right"/>
                     <TextBlock Grid.Row="2" Grid.Column="3" 
-                              Text="{Binding IsSurvivalOverBudget, Converter={x:Static BooleanToStringConverter.Instance}, ConverterParameter='❌|✅'}" 
+                              Text="{Binding IsSurvivalOverBudget, Converter={x:Static converters:BooleanToStringConverter.Instance}, ConverterParameter='✅|❌'}" 
                               HorizontalAlignment="Right"/>
                     
                     <TextBlock Grid.Row="3" Text="Opcional"/>
                     <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding OptionalBudget, StringFormat=C}" HorizontalAlignment="Right"/>
                     <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding ActualExpenses.Optional, StringFormat=C}" HorizontalAlignment="Right"/>
                     <TextBlock Grid.Row="3" Grid.Column="3" 
-                              Text="{Binding IsOptionalOverBudget, Converter={x:Static BooleanToStringConverter.Instance}, ConverterParameter='❌|✅'}" 
+                              Text="{Binding IsOptionalOverBudget, Converter={x:Static converters:BooleanToStringConverter.Instance}, ConverterParameter='✅|❌'}" 
                               HorizontalAlignment="Right"/>
                     
                     <TextBlock Grid.Row="4" Text="Cultura"/>
                     <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding CultureBudget, StringFormat=C}" HorizontalAlignment="Right"/>
                     <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding ActualExpenses.Culture, StringFormat=C}" HorizontalAlignment="Right"/>
                     <TextBlock Grid.Row="4" Grid.Column="3" 
-                              Text="{Binding IsCultureOverBudget, Converter={x:Static BooleanToStringConverter.Instance}, ConverterParameter='❌|✅'}" 
+                              Text="{Binding IsCultureOverBudget, Converter={x:Static converters:BooleanToStringConverter.Instance}, ConverterParameter='✅|❌'}" 
                               HorizontalAlignment="Right"/>
                 </Grid>
             </Border>
@@ -139,7 +140,7 @@
                               Text="{Binding BalanceInfo.Balance, StringFormat=C}" 
                               HorizontalAlignment="Right" 
                               FontWeight="SemiBold"
-                              Foreground="{Binding BalanceInfo.Balance, Converter={StaticResource BalanceToColorConverter}}"/>
+                              Foreground="{Binding BalanceInfo.Balance, Converter={x:Static converters:BalanceToColorConverter.Instance}}"/>
                 </Grid>
             </Border>
             

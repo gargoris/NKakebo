@@ -129,6 +129,8 @@ public class TransactionTypeToColorConverter : IValueConverter
 
 public class BalanceToColorConverter : IValueConverter
 {
+    public static BalanceToColorConverter Instance { get; } = new();
+
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is decimal balance)
@@ -146,6 +148,8 @@ public class BalanceToColorConverter : IValueConverter
 
 public class CategoryDisplayConverter : IValueConverter
 {
+    public static CategoryDisplayConverter Instance { get; } = new();
+
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is Category category)

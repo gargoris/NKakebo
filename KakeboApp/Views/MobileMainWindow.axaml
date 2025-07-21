@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:KakeboApp.ViewModels"
+        xmlns:converters="using:KakeboApp.Converters"
         x:Class="KakeboApp.Views.MobileMainWindow"
         x:DataType="vm:MobileMainWindowViewModel"
         Title="{Binding PageTitle}"
@@ -33,7 +34,11 @@
         </Border>
 
         <!-- Content Area -->
-        <Grid Grid.Row="1" ColumnDefinitions="{Binding IsMobile, Converter={StaticResource MobileLayoutConverter}}">
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{Binding IsMobile, Converter={x:Static converters:BooleanToGridLengthConverter.Instance}, ConverterParameter='200|0'}"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
             
             <!-- Sidebar -->
             <Border Grid.Column="0" 
@@ -63,7 +68,7 @@
             </Border>
             
             <!-- Main Content -->
-            <ContentControl Grid.Column="{Binding IsMobile, Converter={StaticResource BooleanToIntConverter}, ConverterParameter='0|0'}" 
+            <ContentControl Grid.Column="1" 
                            Content="{Binding CurrentPage}"/>
         </Grid>
     </Grid>

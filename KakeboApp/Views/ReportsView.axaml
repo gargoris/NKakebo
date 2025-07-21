@@ -2,9 +2,9 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:KakeboApp.ViewModels"
-             xmlns:global="clr-namespace:"
+             xmlns:converters="using:KakeboApp.Converters"
              x:Class="KakeboApp.Views.ReportsView"
-             x:DataType="global:ReportsViewModel">
+             x:DataType="vm:ReportsViewModel">
 
     <ScrollViewer>
         <StackPanel Margin="30" MaxWidth="900">
@@ -64,7 +64,7 @@
                         <TextBlock Text="{Binding BalanceInfo.Balance, StringFormat=C}"
                                   FontSize="20"
                                   FontWeight="Bold"
-                                  Foreground="{Binding BalanceInfo.Balance, Converter={StaticResource BalanceToColorConverter}}"
+                                  Foreground="{Binding BalanceInfo.Balance, Converter={x:Static converters:BalanceToColorConverter.Instance}}"
                                   HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Grid>
@@ -82,14 +82,14 @@
                               FontWeight="SemiBold"
                               Margin="0,0,0,15"/>
 
-                    <DataGrid Items="{Binding ExpensesByCategory}"
+                    <DataGrid ItemsSource="{Binding ExpensesByCategory}"
                              AutoGenerateColumns="False"
                              GridLinesVisibility="None"
                              HeadersVisibility="Column">
 
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Categoría"
-                                               Binding="{Binding Category, Converter={StaticResource CategoryDisplayConverter}}"
+                                               Binding="{Binding Category, Converter={x:Static converters:CategoryDisplayConverter.Instance}}"
                                                Width="200"/>
 
                             <DataGridTextColumn Header="Monto"
@@ -116,14 +116,14 @@
                               FontWeight="SemiBold"
                               Margin="0,0,0,15"/>
 
-                    <DataGrid Items="{Binding ExpensesBySubcategory}"
+                    <DataGrid ItemsSource="{Binding ExpensesBySubcategory}"
                              AutoGenerateColumns="False"
                              GridLinesVisibility="None"
                              HeadersVisibility="Column">
 
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Categoría"
-                                               Binding="{Binding Category, Converter={StaticResource CategoryDisplayConverter}}"
+                                               Binding="{Binding Category, Converter={x:Static converters:CategoryDisplayConverter.Instance}}"
                                                Width="150"/>
 
                             <DataGridTextColumn Header="Subcategoría"

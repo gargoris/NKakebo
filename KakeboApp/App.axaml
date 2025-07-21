@@ -2,12 +2,11 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:converters="clr-namespace:KakeboApp.Converters"
-             xmlns:reactiveUi="clr-namespace:ReactiveUI;assembly=ReactiveUI"
              x:Class="KakeboApp.App"
              RequestedThemeVariant="Default">
 
     <Application.DataTemplates>
-        <reactiveUi:ViewLocator/>
+        <!-- Removed ReactiveUI ViewLocator for now -->
     </Application.DataTemplates>
 
     <Application.Styles>

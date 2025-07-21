@@ -1,4 +1,3 @@
-
 // ViewModel principal de la aplicación
 
 using System;
@@ -6,6 +5,8 @@ using System.Reactive;
 using KakeboApp.Core.Interfaces;
 using KakeboApp.ViewModels;
 using ReactiveUI;
+
+namespace KakeboApp.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
@@ -36,9 +37,6 @@ public class MainWindowViewModel : ViewModelBase
         ShowBudgetCommand = ReactiveCommand.Create(ShowBudget);
         ShowReportsCommand = ReactiveCommand.Create(ShowReports);
         ShowConnectionCommand = ReactiveCommand.Create(ShowConnection);
-
-        // Suscripción a eventos de conexión
-        ConnectionViewModel.DatabaseConnected.Subscribe(_ => OnDatabaseConnected());
 
         // Estado inicial
         IsConnected = _databaseService.IsConnected;
