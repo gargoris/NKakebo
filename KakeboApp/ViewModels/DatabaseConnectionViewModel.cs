@@ -1,27 +1,30 @@
-
 // ViewModel para configuración de conexión a base de datos
 
 using System;
+using System.Reactive;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using KakeboApp.Core.Interfaces;
 using KakeboApp.Core.Models;
-using KakeboApp.Core.Utils;
 using KakeboApp.ViewModels;
 using ReactiveUI;
+using CoreUnit = KakeboApp.Core.Utils.Unit;
 
 public class DatabaseConnectionViewModel : ViewModelBase
 {
     private readonly IDatabaseService _databaseService;
+    private readonly IPlatformService _platformService;
     private string _databasePath = string.Empty;
     private string? _password;
     private bool _isConnecting;
     private string? _errorMessage;
     private readonly Subject<Unit> _databaseConnected = new();
 
-    public DatabaseConnectionViewModel(IDatabaseService databaseService)
+    public DatabaseConnectionViewModel(IDatabaseService databaseService, IPlatformService platformService)
     {
         _databaseService = databaseService;
+        _platformService = platformService;
 
         // Comandos con validación reactiva
         var canConnect = this.WhenAnyValue(
@@ -108,20 +111,41 @@ public class DatabaseConnectionViewModel : ViewModelBase
 
     private async Task BrowseForFile()
     {
-        // En una implementación real, aquí iría el diálogo de archivos
-        // Para este ejemplo, simulamos la selección
-        await Task.Delay(100);
-
-        // Placeholder - en Avalonia se usaría StorageProvider
-        // DatabasePath = selectedPath;
+        try
+        {
+            var selectedPath = await _platformService.PickFileAsync("Seleccionar Base de Datos", "db");
+            if (!string.IsNullOrEmpty(selectedPath))
+            {
+                DatabasePath = selectedPath;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error al seleccionar archivo: {ex.Message}";
+        }
     }
 
     private async Task CreateNewDatabase()
     {
-        // En una implementación real, aquí iría el diálogo para guardar archivo
-        await Task.Delay(100);
-
-        // Placeholder - crear nueva base de datos
-        // var result = await _databaseService.CreateDatabaseAsync(newPath, Password);
+        try
+        {
+            var selectedPath = await _platformService.SaveFileAsync("Crear Nueva Base de Datos", "kakebo.db", "db");
+            if (!string.IsNullOrEmpty(selectedPath))
+            {
+                var result = await _databaseService.CreateDatabaseAsync(selectedPath, Password);
+                if (result.IsSuccess)
+                {
+                    DatabasePath = selectedPath;
+                }
+                else
+                {
+                    ErrorMessage = result.GetError();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error al crear base de datos: {ex.Message}";
+        }
     }
 }

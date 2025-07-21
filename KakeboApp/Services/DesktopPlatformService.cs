@@ -13,40 +13,47 @@ public class DesktopPlatformService : IPlatformService
 {
     public bool IsMobile => false;
 
-    public async Task<string?> PickFileAsync()
+    public async Task<string?> PickFileAsync(string title, params string[] extensions)
     {
         if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
             return null;
 
+        // Build file type filters from extensions
+        var fileTypeFilters = extensions.Length > 0
+            ? new[] { new FilePickerFileType("Archivos") { Patterns = extensions.Select(ext => ext.StartsWith("*.") ? ext : $"*.{ext}").ToArray() } }
+            : new[] { new FilePickerFileType("Todos los archivos") { Patterns = new[] { "*.*" } } };
+
         var files = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(
             new FilePickerOpenOptions
             {
-                Title = "Seleccionar Base de Datos",
-                FileTypeFilter = new[]
-                {
-                    new FilePickerFileType("Base de Datos") { Patterns = new[] { "*.db" } }
-                }
+                Title = title,
+                FileTypeFilter = fileTypeFilters
             });
 
         return files.FirstOrDefault()?.Path.LocalPath;
     }
 
-    public async Task<string?> SaveFileAsync(string defaultName)
+    public async Task<string?> SaveFileAsync(string title, string defaultName, params string[] extensions)
     {
         if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
             return null;
 
+        // Determine default extension from extensions array or fallback to "db"
+        var defaultExtension = extensions.Length > 0 
+            ? extensions[0].TrimStart('*', '.') 
+            : "db";
+
         var file = await desktop.MainWindow!.StorageProvider.SaveFilePickerAsync(
             new FilePickerSaveOptions
             {
-                Title = "Crear Base de Datos",
+                Title = title,
                 SuggestedFileName = defaultName,
-                DefaultExtension = "db"
+                DefaultExtension = defaultExtension
             });
 
         return file?.Path.LocalPath;
     }
 
-    public string GetDatabasePath() =>
+    public string GetLocalDataPath() =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "KakeboApp");
 }
