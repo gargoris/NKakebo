@@ -10,6 +10,7 @@ using KakeboApp.Core.Interfaces;
 using KakeboApp.Core.Models;
 using KakeboApp.Core.Utils;
 using Unit = System.Reactive.Unit;
+using Serilog;
 
 namespace KakeboApp.ViewModels;
 
@@ -46,6 +47,9 @@ public class TransactionsViewModel : ViewModelBase
         this.WhenAnyValue(x => x.SearchText, x => x.FilterCategory, x => x.FilterType)
             .Throttle(TimeSpan.FromMilliseconds(300))
             .Subscribe(_ => ApplyFilters());
+
+        // Cargar datos iniciales de forma asíncrona
+        // _ = Task.Run(LoadData);
     }
 
     public ObservableCollection<Transaction> Transactions { get; }
@@ -110,8 +114,7 @@ public class TransactionsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            // En una implementación real, mostrar error al usuario
-            System.Diagnostics.Debug.WriteLine($"Error loading transactions: {ex.Message}");
+            Log.Error(ex, "Error loading transactions");
         }
         finally
         {
@@ -145,7 +148,7 @@ public class TransactionsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error deleting transaction: {ex.Message}");
+            Log.Error(ex, "Error deleting transaction");
         }
     }
 

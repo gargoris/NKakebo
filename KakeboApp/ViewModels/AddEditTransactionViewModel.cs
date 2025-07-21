@@ -12,6 +12,7 @@ using KakeboApp.Core.Utils;
 using KakeboApp.ViewModels;
 using ReactiveUI;
 using System.Reactive;
+using Serilog;
 
 public class AddEditTransactionViewModel : ViewModelBase
 {
@@ -195,7 +196,7 @@ public class AddEditTransactionViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error saving transaction: {ex.Message}");
+            Log.Error(ex, "Error saving transaction");
         }
         finally
         {

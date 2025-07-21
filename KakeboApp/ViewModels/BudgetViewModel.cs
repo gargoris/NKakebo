@@ -8,6 +8,7 @@ using KakeboApp.Core.Models;
 using KakeboApp.Core.Services;
 using KakeboApp.Core.Utils;
 using Unit = System.Reactive.Unit;
+using Serilog;
 
 namespace KakeboApp.ViewModels;
 
@@ -44,9 +45,6 @@ public class BudgetViewModel : ViewModelBase
         SaveBudgetCommand = ReactiveCommand.CreateFromTask(SaveBudget, canSave);
 
         RefreshDataCommand = ReactiveCommand.CreateFromTask(LoadData);
-
-        // Cargar datos iniciales de forma asíncrona
-        _ = Task.Run(LoadData);
     }
 
     public int CurrentYear
@@ -144,7 +142,7 @@ public class BudgetViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error loading budget data: {ex.Message}");
+            Log.Error(ex, "Error loading budget data");
         }
         finally
         {
@@ -195,7 +193,7 @@ public class BudgetViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error saving budget: {ex.Message}");
+            Log.Error(ex, "Error saving budget");
         }
     }
 

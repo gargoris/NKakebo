@@ -9,6 +9,7 @@ using KakeboApp.Core.Models;
 using KakeboApp.Core.Services;
 using KakeboApp.ViewModels;
 using ReactiveUI;
+using Serilog;
 
 namespace KakeboApp.ViewModels;
 
@@ -36,8 +37,8 @@ public class ReportsViewModel : ViewModelBase
         ToggleViewCommand = ReactiveCommand.Create(ToggleView);
         RefreshDataCommand = ReactiveCommand.CreateFromTask(LoadData);
 
-        // Cargar datos de forma asíncrona sin bloquear el constructor
-        _ = Task.Run(LoadData);
+        // Cargar datos iniciales de forma asíncrona
+        // _ = Task.Run(LoadData);
     }
 
     public ObservableCollection<ExpenseByCategory> ExpensesByCategory { get; }
@@ -104,7 +105,7 @@ public class ReportsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error loading reports: {ex.Message}");
+            Log.Error(ex, "Error loading reports");
         }
         finally
         {

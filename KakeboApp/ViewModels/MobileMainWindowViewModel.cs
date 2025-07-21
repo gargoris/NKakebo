@@ -4,6 +4,7 @@ using ReactiveUI;
 using System.Reactive;
 using KakeboApp.Core.Interfaces;
 using KakeboApp.Core.Models;
+using Serilog;
 
 namespace KakeboApp.ViewModels;
 
@@ -98,7 +99,7 @@ public class MobileMainWindowViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error initializing mobile database: {ex.Message}");
+            Log.Error(ex, "Error initializing mobile database");
         }
     }
 }
