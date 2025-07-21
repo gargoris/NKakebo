@@ -1,12 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
 <PropertyGroup>
-    <TargetFrameworks>net9.0-windows</TargetFrameworks>
+    <!-- Soporte multiplataforma: Windows, Linux, macOS -->
+    <TargetFramework>net9.0</TargetFramework>
     <OutputType>Exe</OutputType>
     <Nullable>enable</Nullable>
     <BuiltInComLinterEnabled>true</BuiltInComLinterEnabled>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    
+    <!-- Configuración para publicación -->
+    <UseAppHost>true</UseAppHost>
+    <PublishSingleFile>false</PublishSingleFile>
+    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;win-arm64;linux-arm64;osx-arm64</RuntimeIdentifiers>
 </PropertyGroup>
 
+<!-- Paquetes Avalonia - totalmente multiplataforma -->
 <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.2" />
     <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.2" />
@@ -20,7 +27,21 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
 </ItemGroup>
 
+<!-- Referencias de proyecto -->
 <ItemGroup>
     <ProjectReference Include="..\KakeboApp.Core\KakeboApp.Core.csproj" />
 </ItemGroup>
+
+<!-- Configuración específica de plataforma -->
+<PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+</PropertyGroup>
+
+<PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
+    <DefineConstants>$(DefineConstants);LINUX</DefineConstants>
+</PropertyGroup>
+
+<PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <DefineConstants>$(DefineConstants);MACOS</DefineConstants>
+</PropertyGroup>
 </Project>

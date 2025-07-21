@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
@@ -18,14 +19,24 @@ public class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        try
+        {
+            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        }
+        catch (Exception ex)
+        {
+            // Log error para debugging en diferentes plataformas
+            Console.WriteLine($"Error iniciando aplicación: {ex}");
+            throw;
+        }
     }
 
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
-            .UsePlatformDetect()
+            .UsePlatformDetect() // Detección automática de plataforma
+            .WithInterFont()
             .LogToTrace()
-            .WithInterFont();
+            .UseSkia(); // Renderer multiplataforma
 }
 
 public partial class App : Application
@@ -44,48 +55,49 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var mainWindow = _host!.Services.GetRequiredService<MainWindow>();
+            var mainWindowViewModel = _host!.Services.GetRequiredService<MainWindowViewModel>();
+            var mainWindow = new MainWindow(mainWindowViewModel);
+            
             desktop.MainWindow = mainWindow;
+            
+            // Manejar cierre de aplicación
+            desktop.ShutdownRequested += OnShutdownRequested;
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
         {
-            var mainView = _host!.Services.GetRequiredService<MainView>();
+            // Para plataformas móviles (futuro soporte)
+            var mainView = new MainView();
             singleViewPlatform.MainView = mainView;
         }
 
         base.OnFrameworkInitializationCompleted();
     }
 
+    private void OnShutdownRequested(object? sender, ShutdownRequestedEventArgs e)
+    {
+        _host?.StopAsync();
+        _host?.Dispose();
+    }
+
     private static IHostBuilder CreateHostBuilder() =>
         Host.CreateDefaultBuilder()
             .ConfigureServices((context, services) =>
             {
-                // Platform services
-                services.AddSingleton<IPlatformService>(sp =>
-                {
-#if ANDROID
-                    return new AndroidPlatformService();
-#else
-                    return new DesktopPlatformService();
-#endif
-                });
+                // Configurar servicio de plataforma según OS
+                services.AddSingleton<IPlatformService, CrossPlatformService>();
 
-                // Core services
+                // Core services - completamente multiplataforma
                 services.AddSingleton<IKakeboDatabase, LiteDbKakeboDatabase>();
                 services.AddScoped<IDatabaseService, DatabaseService>();
                 services.AddScoped<ITransactionService, TransactionService>();
                 services.AddScoped<IBudgetService, BudgetService>();
 
-                // ViewModels
+                // ViewModels - sin dependencias de plataforma
                 services.AddTransient<MainWindowViewModel>();
                 services.AddTransient<DatabaseConnectionViewModel>();
                 services.AddTransient<TransactionsViewModel>();
                 services.AddTransient<AddEditTransactionViewModel>();
                 services.AddTransient<BudgetViewModel>();
                 services.AddTransient<ReportsViewModel>();
-
-                // Views
-                services.AddTransient<MainWindow>();
-                services.AddTransient<MainView>();
             });
 }
