@@ -3,6 +3,8 @@ using System.Reactive;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
+using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using KakeboApp.Core.Interfaces;
 using KakeboApp.Core.Models;
 using ReactiveUI;
@@ -26,8 +28,8 @@ public class DatabaseConnectionViewModel : ViewModelBase
         _platformService = platformService;
 
         // Comandos
-        BrowseFileCommand = ReactiveCommand.CreateFromTask(BrowseFile);
-        CreateNewCommand = ReactiveCommand.CreateFromTask(CreateNew);
+        BrowseFileCommand = ReactiveCommand.CreateFromTask<UserControl>(BrowseFile);
+        CreateNewCommand = ReactiveCommand.CreateFromTask<UserControl>(CreateNew);
         ConnectCommand = ReactiveCommand.CreateFromTask(Connect);
 
         // Configurar ruta inicial
@@ -59,20 +61,31 @@ public class DatabaseConnectionViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _isConnecting, value);
     }
 
-    public ReactiveCommand<Unit, Unit> BrowseFileCommand { get; }
-    public ReactiveCommand<Unit, Unit> CreateNewCommand { get; }
+    public ReactiveCommand<UserControl, Unit> BrowseFileCommand { get; }
+    public ReactiveCommand<UserControl, Unit> CreateNewCommand { get; }
     public ReactiveCommand<Unit, Unit> ConnectCommand { get; }
 
     public IObservable<Unit> DatabaseConnected => _databaseConnected.AsObservable();
 
-    private async Task BrowseFile()
+    private async Task BrowseFile(UserControl control)
     {
         try
         {
-            var file = await _platformService.PickFileAsync("Seleccionar Base de Datos", "db", "sqlite", "sqlite3");
-            if (file != null)
+            var topLevel = TopLevel.GetTopLevel(control);
+            if (topLevel == null) return;
+            var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                DatabasePath = file;
+                Title = "Seleccionar Base de Datos",
+                AllowMultiple = false,
+                FileTypeFilter = new[]
+                {
+                    new FilePickerFileType("Base de Datos") { Patterns = new[] { "*.db", "*.sqlite", "*.sqlite3" } },
+                    new FilePickerFileType("Todos los Archivos") { Patterns = new[] { "*.*" } }
+                }
+            });
+            if (files.Count > 0)
+            {
+                DatabasePath = files[0].Path.LocalPath;
             }
         }
         catch (Exception ex)
@@ -81,14 +94,24 @@ public class DatabaseConnectionViewModel : ViewModelBase
         }
     }
 
-    private async Task CreateNew()
+    private async Task CreateNew(UserControl control)
     {
         try
         {
-            var file = await _platformService.SaveFileAsync("Crear Nueva Base de Datos", "kakebo.db", "db");
+            var topLevel = TopLevel.GetTopLevel(control);
+            if (topLevel == null) return;
+            var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Crear Nueva Base de Datos",
+                DefaultExtension = "db",
+                FileTypeChoices = new[]
+                {
+                    new FilePickerFileType("Base de Datos") { Patterns = new[] { "*.db" } }
+                }
+            });
             if (file != null)
             {
-                DatabasePath = file;
+                DatabasePath = file.Path.LocalPath;
             }
         }
         catch (Exception ex)
