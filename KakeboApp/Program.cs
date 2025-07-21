@@ -11,6 +11,10 @@ using KakeboApp.Core.Data;
 using KakeboApp.Services;
 using KakeboApp.ViewModels;
 using KakeboApp.Views;
+using Serilog;
+using Serilog.Events;
+using Serilog.Extensions.Logging;
+using ReactiveUI;
 
 namespace KakeboApp;
 
@@ -19,15 +23,23 @@ public class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.Console()
+            .CreateLogger();
         try
         {
+            Log.Debug("Iniciando aplicación KakeboApp");
             BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         }
         catch (Exception ex)
         {
-            // Log error para debugging en diferentes plataformas
-            Console.WriteLine($"Error iniciando aplicación: {ex}");
+            Log.Error(ex, "Error iniciando aplicación");
             throw;
+        }
+        finally
+        {
+            Log.CloseAndFlush();
         }
     }
 
@@ -81,6 +93,7 @@ public partial class App : Application
 
     private static IHostBuilder CreateHostBuilder() =>
         Host.CreateDefaultBuilder()
+            .UseSerilog(Log.Logger, dispose: true) // Integrar Serilog como logger global
             .ConfigureServices((context, services) =>
             {
                 // Configurar servicio de plataforma según OS
