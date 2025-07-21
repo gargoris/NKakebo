@@ -11,6 +11,7 @@ using KakeboApp.Core.Models;
 using KakeboApp.Core.Utils;
 using KakeboApp.ViewModels;
 using ReactiveUI;
+using System.Reactive;
 
 public class AddEditTransactionViewModel : ViewModelBase
 {
@@ -25,8 +26,8 @@ public class AddEditTransactionViewModel : ViewModelBase
     private string? _notes;
     private bool _isEditing;
 
-    private readonly Subject<Unit> _transactionSaved = new();
-    private readonly Subject<Unit> _cancelled = new();
+    private readonly Subject<System.Reactive.Unit> _transactionSaved = new();
+    private readonly Subject<System.Reactive.Unit> _cancelled = new();
 
     public AddEditTransactionViewModel(ITransactionService transactionService)
     {
@@ -119,14 +120,14 @@ public class AddEditTransactionViewModel : ViewModelBase
     };
 
     // Comandos
-    public ReactiveCommand<Unit, Unit> SaveCommand { get; }
-    public ReactiveCommand<Unit, Unit> CancelCommand { get; }
-    public ReactiveCommand<string, Unit> SelectSubcategoryCommand { get; }
-    public ReactiveCommand<Unit, Unit> ClearSubcategoryCommand { get; }
+    public ReactiveCommand<System.Reactive.Unit, System.Reactive.Unit> SaveCommand { get; }
+    public ReactiveCommand<System.Reactive.Unit, System.Reactive.Unit> CancelCommand { get; }
+    public ReactiveCommand<string, System.Reactive.Unit> SelectSubcategoryCommand { get; }
+    public ReactiveCommand<System.Reactive.Unit, System.Reactive.Unit> ClearSubcategoryCommand { get; }
 
     // Observables
-    public IObservable<Unit> TransactionSaved => _transactionSaved.AsObservable();
-    public IObservable<Unit> Cancelled => _cancelled.AsObservable();
+    public IObservable<System.Reactive.Unit> TransactionSaved => _transactionSaved.AsObservable();
+    public IObservable<System.Reactive.Unit> Cancelled => _cancelled.AsObservable();
 
     public void StartAdd()
     {
@@ -190,7 +191,7 @@ public class AddEditTransactionViewModel : ViewModelBase
                 await _transactionService.AddTransactionAsync(transaction);
             }
 
-            _transactionSaved.OnNext(Unit.Default);
+            _transactionSaved.OnNext(System.Reactive.Unit.Default);
         }
         catch (Exception ex)
         {
@@ -204,7 +205,7 @@ public class AddEditTransactionViewModel : ViewModelBase
 
     private void Cancel()
     {
-        _cancelled.OnNext(Unit.Default);
+        _cancelled.OnNext(System.Reactive.Unit.Default);
     }
 
     private void SelectSubcategory(string subcategory)

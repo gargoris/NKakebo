@@ -2,6 +2,7 @@
 
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using KakeboApp.ViewModels;
 using KakeboApp.Core.Models;
@@ -44,15 +45,72 @@ public partial class TransactionsView : UserControl
 
     private async Task<bool> ShowConfirmationDialog(string title, string message)
     {
-        var dialog = new ContentDialog
+        var dialog = new Window
         {
             Title = title,
-            Content = message,
-            PrimaryButtonText = "Eliminar",
-            SecondaryButtonText = "Cancelar"
+            Width = 400,
+            Height = 200,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false
         };
 
-        var result = await dialog.ShowAsync();
-        return result == ContentDialogResult.Primary;
+        var panel = new StackPanel
+        {
+            Margin = new Avalonia.Thickness(20),
+            Spacing = 20
+        };
+
+        panel.Children.Add(new TextBlock
+        {
+            Text = message,
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+            Margin = new Avalonia.Thickness(0, 0, 0, 20)
+        });
+
+        var buttonPanel = new StackPanel
+        {
+            Orientation = Avalonia.Layout.Orientation.Horizontal,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+            Spacing = 10
+        };
+
+        var deleteButton = new Button
+        {
+            Content = "Eliminar",
+            Classes = { "accent" }
+        };
+
+        var cancelButton = new Button
+        {
+            Content = "Cancelar"
+        };
+
+        bool result = false;
+
+        deleteButton.Click += (s, e) =>
+        {
+            result = true;
+            dialog.Close();
+        };
+
+        cancelButton.Click += (s, e) =>
+        {
+            result = false;
+            dialog.Close();
+        };
+
+        buttonPanel.Children.Add(deleteButton);
+        buttonPanel.Children.Add(cancelButton);
+        panel.Children.Add(buttonPanel);
+
+        dialog.Content = panel;
+
+        var mainWindow = TopLevel.GetTopLevel(this) as Window;
+        if (mainWindow != null)
+        {
+            await dialog.ShowDialog(mainWindow);
+        }
+
+        return result;
     }
 }

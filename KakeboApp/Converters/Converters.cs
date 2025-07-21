@@ -4,14 +4,41 @@ using System;
 using Avalonia.Data.Converters;
 using Avalonia;
 using System.Globalization;
+using System.Linq;
+using System.Collections.Generic;
 using Avalonia.Controls;
 using KakeboApp.Core.Models;
 using KakeboApp.Core.Utils;
 
 namespace KakeboApp.Converters;
 
+public class BooleanToStringConverter : IValueConverter
+{
+    public static BooleanToStringConverter Instance { get; } = new();
+    
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is bool boolValue && parameter is string param)
+        {
+            var parts = param.Split('|');
+            if (parts.Length == 2)
+            {
+                return boolValue ? parts[1] : parts[0];
+            }
+        }
+        return value?.ToString();
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
 public class BooleanToGridLengthConverter : IValueConverter
 {
+    public static BooleanToGridLengthConverter Instance { get; } = new();
+
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is bool boolValue && parameter is string param)
@@ -27,10 +54,26 @@ public class BooleanToGridLengthConverter : IValueConverter
                     return GridLength.Auto;
 
                 if (double.TryParse(selectedValue, out var length))
-                    return new GridLength(length);
+                    return new GridLength(length, GridUnitType.Pixel);
             }
         }
         return GridLength.Auto;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+public class CategoryListConverter : IValueConverter
+{
+    public static CategoryListConverter Instance { get; } = new();
+
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        // Return all categories as a list
+        return Enum.GetValues<Category>().ToList();
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -62,6 +105,8 @@ public class BooleanToIntConverter : IValueConverter
 
 public class TransactionTypeToColorConverter : IValueConverter
 {
+    public static TransactionTypeToColorConverter Instance { get; } = new();
+
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is TransactionType type)

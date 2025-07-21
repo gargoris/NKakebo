@@ -25,6 +25,16 @@ public static class DateHelpers
         return (year, month + 1);
     }
 
+    public static DateTime GetFirstDayOfMonth(int year, int month)
+    {
+        return new DateTime(year, month, 1);
+    }
+
+    public static DateTime GetLastDayOfMonth(int year, int month)
+    {
+        return new DateTime(year, month, DateTime.DaysInMonth(year, month));
+    }
+
     public static bool IsCurrentMonth(int year, int month)
     {
         var now = DateTime.Now;

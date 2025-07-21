@@ -1,26 +1,19 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 <PropertyGroup>
-    <TargetFrameworks>net9.0;net9.0-windows;net9.0-android</TargetFrameworks>
+    <TargetFrameworks>net9.0-windows</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <Nullable>enable</Nullable>
     <BuiltInComLinterEnabled>true</BuiltInComLinterEnabled>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-
-    <!-- Android específico -->
-    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
-    <ApplicationId>com.kakeboapp.financialmanager</ApplicationId>
-    <ApplicationDisplayName>Kakebo</ApplicationDisplayName>
-    <ApplicationVersion>1</ApplicationVersion>
-    <ApplicationTitle>Kakebo - Gestión Financiera</ApplicationTitle>
 </PropertyGroup>
 
 <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.0.10" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.0.10" Condition="$(TargetFramework.Contains('windows'))" />
-    <PackageReference Include="Avalonia.Android" Version="11.0.10" Condition="$(TargetFramework.Contains('android'))" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.10" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.0.10" />
-    <PackageReference Include="Avalonia.ReactiveUI" Version="11.0.10" />
+    <PackageReference Include="Avalonia" Version="11.3.2" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.2" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.2" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.2" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.2" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="11.3.2" />
     <PackageReference Include="ReactiveUI" Version="20.1.1" />
     <PackageReference Include="LiteDB" Version="5.0.21" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
@@ -29,11 +22,5 @@
 
 <ItemGroup>
     <ProjectReference Include="..\KakeboApp.Core\KakeboApp.Core.csproj" />
-</ItemGroup>
-
-<!-- Android Resources -->
-<ItemGroup Condition="$(TargetFramework.Contains('android'))">
-    <AndroidResource Include="Platforms\Android\Resources\**" />
-    <AndroidAsset Include="Platforms\Android\Assets\**" />
 </ItemGroup>
 </Project>

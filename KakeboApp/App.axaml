@@ -17,8 +17,10 @@
 
     <Application.Resources>
         <!-- Global Converters -->
+        <converters:BooleanToStringConverter x:Key="BooleanToStringConverter"/>
         <converters:BooleanToGridLengthConverter x:Key="BooleanToGridLengthConverter"/>
         <converters:BooleanToIntConverter x:Key="BooleanToIntConverter"/>
+        <converters:CategoryListConverter x:Key="CategoryListConverter"/>
         <converters:TransactionTypeToColorConverter x:Key="TransactionTypeToColorConverter"/>
         <converters:BalanceToColorConverter x:Key="BalanceToColorConverter"/>
         <converters:CategoryDisplayConverter x:Key="CategoryDisplayConverter"/>

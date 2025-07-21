@@ -45,8 +45,8 @@ public class BudgetViewModel : ViewModelBase
 
         RefreshDataCommand = ReactiveCommand.CreateFromTask(LoadData);
 
-        // Cargar datos iniciales
-        LoadData();
+        // Cargar datos iniciales de forma asíncrona
+        _ = Task.Run(LoadData);
     }
 
     public int CurrentYear

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
@@ -15,8 +16,8 @@ public class WindowsPlatformService : IPlatformService
 
     public async Task<string?> PickFileAsync(string title, params string[] extensions)
     {
-        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
-        if (topLevel?.StorageProvider is not { } provider) return null;
+        var mainWindow = GetMainWindow();
+        if (mainWindow?.StorageProvider is not { } provider) return null;
 
         var files = await provider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
@@ -33,8 +34,8 @@ public class WindowsPlatformService : IPlatformService
 
     public async Task<string?> SaveFileAsync(string title, string defaultName, params string[] extensions)
     {
-        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
-        if (topLevel?.StorageProvider is not { } provider) return null;
+        var mainWindow = GetMainWindow();
+        if (mainWindow?.StorageProvider is not { } provider) return null;
 
         var file = await provider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
@@ -52,4 +53,13 @@ public class WindowsPlatformService : IPlatformService
 
     public string GetLocalDataPath() =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "KakeboApp");
+
+    private static Window? GetMainWindow()
+    {
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            return desktop.MainWindow;
+        }
+        return null;
+    }
 }

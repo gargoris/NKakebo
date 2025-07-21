@@ -10,6 +10,8 @@ using KakeboApp.Core.Services;
 using KakeboApp.ViewModels;
 using ReactiveUI;
 
+namespace KakeboApp.ViewModels;
+
 public class ReportsViewModel : ViewModelBase
 {
     private readonly ITransactionService _transactionService;
@@ -34,7 +36,8 @@ public class ReportsViewModel : ViewModelBase
         ToggleViewCommand = ReactiveCommand.Create(ToggleView);
         RefreshDataCommand = ReactiveCommand.CreateFromTask(LoadData);
 
-        LoadData();
+        // Cargar datos de forma asíncrona sin bloquear el constructor
+        _ = Task.Run(LoadData);
     }
 
     public ObservableCollection<ExpenseByCategory> ExpensesByCategory { get; }
