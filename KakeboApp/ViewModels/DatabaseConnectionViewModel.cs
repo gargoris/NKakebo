@@ -27,7 +27,7 @@ public class DatabaseConnectionViewModel : ViewModelBase
         _databaseService = databaseService;
         _platformService = platformService;
 
-        // Comandos
+        // Comandos sin scheduler específico para evitar problemas de threading
         BrowseFileCommand = ReactiveCommand.CreateFromTask<UserControl>(BrowseFile);
         CreateNewCommand = ReactiveCommand.CreateFromTask<UserControl>(CreateNew);
         ConnectCommand = ReactiveCommand.CreateFromTask(Connect);
@@ -40,25 +40,65 @@ public class DatabaseConnectionViewModel : ViewModelBase
     public string DatabasePath
     {
         get => _databasePath;
-        set => this.RaiseAndSetIfChanged(ref _databasePath, value);
+        set
+        {
+            if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
+            {
+                this.RaiseAndSetIfChanged(ref _databasePath, value);
+            }
+            else
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => this.RaiseAndSetIfChanged(ref _databasePath, value));
+            }
+        }
     }
 
     public string? Password
     {
         get => _password;
-        set => this.RaiseAndSetIfChanged(ref _password, value);
+        set
+        {
+            if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
+            {
+                this.RaiseAndSetIfChanged(ref _password, value);
+            }
+            else
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => this.RaiseAndSetIfChanged(ref _password, value));
+            }
+        }
     }
 
     public string? ErrorMessage
     {
         get => _errorMessage;
-        set => this.RaiseAndSetIfChanged(ref _errorMessage, value);
+        set
+        {
+            if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
+            {
+                this.RaiseAndSetIfChanged(ref _errorMessage, value);
+            }
+            else
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => this.RaiseAndSetIfChanged(ref _errorMessage, value));
+            }
+        }
     }
 
     public bool IsConnecting
     {
         get => _isConnecting;
-        set => this.RaiseAndSetIfChanged(ref _isConnecting, value);
+        set
+        {
+            if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
+            {
+                this.RaiseAndSetIfChanged(ref _isConnecting, value);
+            }
+            else
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => this.RaiseAndSetIfChanged(ref _isConnecting, value));
+            }
+        }
     }
 
     public ReactiveCommand<UserControl, Unit> BrowseFileCommand { get; }
@@ -71,25 +111,22 @@ public class DatabaseConnectionViewModel : ViewModelBase
     {
         try
         {
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
+            var topLevel = TopLevel.GetTopLevel(control);
+            if (topLevel == null) return;
+            var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                var topLevel = TopLevel.GetTopLevel(control);
-                if (topLevel == null) return;
-                var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                Title = "Seleccionar Base de Datos",
+                AllowMultiple = false,
+                FileTypeFilter = new[]
                 {
-                    Title = "Seleccionar Base de Datos",
-                    AllowMultiple = false,
-                    FileTypeFilter = new[]
-                    {
-                        new FilePickerFileType("Base de Datos") { Patterns = new[] { "*.db", "*.sqlite", "*.sqlite3" } },
-                        new FilePickerFileType("Todos los Archivos") { Patterns = new[] { "*.*" } }
-                    }
-                });
-                if (files.Count > 0)
-                {
-                    DatabasePath = files[0].Path.LocalPath;
+                    new FilePickerFileType("Base de Datos") { Patterns = new[] { "*.db", "*.sqlite", "*.sqlite3" } },
+                    new FilePickerFileType("Todos los Archivos") { Patterns = new[] { "*.*" } }
                 }
             });
+            if (files.Count > 0)
+            {
+                DatabasePath = files[0].Path.LocalPath;
+            }
         }
         catch (Exception ex)
         {
@@ -101,24 +138,21 @@ public class DatabaseConnectionViewModel : ViewModelBase
     {
         try
         {
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
+            var topLevel = TopLevel.GetTopLevel(control);
+            if (topLevel == null) return;
+            var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
-                var topLevel = TopLevel.GetTopLevel(control);
-                if (topLevel == null) return;
-                var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+                Title = "Crear Nueva Base de Datos",
+                DefaultExtension = "db",
+                FileTypeChoices = new[]
                 {
-                    Title = "Crear Nueva Base de Datos",
-                    DefaultExtension = "db",
-                    FileTypeChoices = new[]
-                    {
-                        new FilePickerFileType("Base de Datos") { Patterns = new[] { "*.db" } }
-                    }
-                });
-                if (file != null)
-                {
-                    DatabasePath = file.Path.LocalPath;
+                    new FilePickerFileType("Base de Datos") { Patterns = new[] { "*.db" } }
                 }
             });
+            if (file != null)
+            {
+                DatabasePath = file.Path.LocalPath;
+            }
         }
         catch (Exception ex)
         {
