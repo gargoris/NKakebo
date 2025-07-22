@@ -9,8 +9,10 @@ using System.Threading.Tasks;
 using KakeboApp.Core.Interfaces;
 using KakeboApp.Core.Models;
 using KakeboApp.Core.Utils;
+using KakeboApp.Utils;
 using Unit = System.Reactive.Unit;
 using Serilog;
+using Avalonia.Threading;
 
 namespace KakeboApp.ViewModels;
 
@@ -102,15 +104,20 @@ public class TransactionsViewModel : ViewModelBase
         IsBusy = true;
         try
         {
-            var transactions = await _transactionService.GetAllTransactionsAsync();
+            // Ejecutar la consulta en background thread
+            var transactions = await Task.Run(async () => 
+                await _transactionService.GetAllTransactionsAsync());
 
-            Transactions.Clear();
-            foreach (var transaction in transactions)
+            // Actualizar UI en UI thread
+            UIThreadHelper.InvokeOnUIThread(() =>
             {
-                Transactions.Add(transaction);
-            }
-
-            ApplyFilters();
+                Transactions.Clear();
+                foreach (var transaction in transactions)
+                {
+                    Transactions.Add(transaction);
+                }
+                ApplyFilters();
+            });
         }
         catch (Exception ex)
         {
@@ -118,7 +125,11 @@ public class TransactionsViewModel : ViewModelBase
         }
         finally
         {
-            IsBusy = false;
+            // IsBusy debe actualizarse en UI thread
+            UIThreadHelper.InvokeOnUIThread(() =>
+            {
+                IsBusy = false;
+            });
         }
     }
 

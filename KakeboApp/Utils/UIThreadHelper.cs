@@ -24,6 +24,21 @@ public static class UIThreadHelper
     }
     
     /// <summary>
+    /// Ejecuta una acción en el UI thread de forma segura de manera síncrona
+    /// </summary>
+    public static void InvokeOnUIThreadSync(Action action)
+    {
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            action();
+        }
+        else
+        {
+            Dispatcher.UIThread.Invoke(action);
+        }
+    }
+    
+    /// <summary>
     /// Ejecuta una tarea asíncrona en el UI thread de forma segura
     /// </summary>
     public static async Task InvokeOnUIThreadAsync(Func<Task> taskFactory)

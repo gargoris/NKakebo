@@ -101,6 +101,10 @@ public partial class App : Application
                 // Configurar servicio de plataforma según OS
                 services.AddSingleton<IPlatformService, CrossPlatformService>();
 
+                // Nuevos servicios de mejores prácticas
+                services.AddSingleton<Navigation.INavigationService, Navigation.NavigationService>();
+                services.AddSingleton<Services.ILayoutManager, Services.LayoutManager>();
+
                 // Core services - completamente multiplataforma
                 services.AddSingleton<IKakeboDatabase, LiteDbKakeboDatabase>();
                 services.AddScoped<IDatabaseService, DatabaseService>();
