@@ -43,7 +43,8 @@ public partial class BudgetViewModel : ViewModelBase
                     income, busy, canExecute);
                 return canExecute;
             })
-            .StartWith(false); // Comenzar deshabilitado hasta que se evalúe
+            .StartWith(false)
+            .ObserveOn(RxApp.MainThreadScheduler); // <-- Forzar notificaciones en el hilo de UI
 
         SaveBudgetCommand = ReactiveCommand.CreateFromTask(
             SaveBudget,
@@ -81,13 +82,13 @@ public partial class BudgetViewModel : ViewModelBase
     // Campos editables con Fody - auto-propiedades
     [Reactive]
     public decimal PlannedIncome { get; set; }
-
+    [Reactive]
     public decimal SurvivalBudget { get; set; }
-
+    [Reactive]
     public decimal OptionalBudget { get; set; }
-
+    [Reactive]
     public decimal CultureBudget { get; set; }
-
+    [Reactive]
     public decimal UnexpectedBudget { get; set; }
 
     // Propiedades calculadas
@@ -189,6 +190,8 @@ public partial class BudgetViewModel : ViewModelBase
                     CurrentBudget = result;
                     ErrorMessage = null;
                 });
+                // Recargar todos los datos para asegurar que todo esté actualizado
+                await ReloadDataAfterSave();
             }
             else
             {
@@ -198,8 +201,6 @@ public partial class BudgetViewModel : ViewModelBase
                     ErrorMessage = error;
                 });
             }
-            // Recargar todos los datos para asegurar que todo esté actualizado
-            await ReloadDataAfterSave();
             Log.Information("Budget saved successfully for {Year}-{Month}", CurrentYear, CurrentMonth);
         }
         catch (Exception ex)
