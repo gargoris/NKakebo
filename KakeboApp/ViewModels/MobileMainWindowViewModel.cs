@@ -11,9 +11,6 @@ namespace KakeboApp.ViewModels;
 public class MobileMainWindowViewModel : ViewModelBase
 {
     private readonly IPlatformService _platformService;
-    private ViewModelBase _currentPage;
-    private bool _isSidebarVisible;
-    private string _pageTitle = "Kakebo";
 
     public MobileMainWindowViewModel(
         IPlatformService platformService,
@@ -29,7 +26,7 @@ public class MobileMainWindowViewModel : ViewModelBase
         ReportsViewModel = reportsViewModel;
 
         // En móvil, iniciamos directamente en transacciones si hay DB
-        _currentPage = TransactionsViewModel;
+        CurrentPage = TransactionsViewModel;
 
         // Comandos
         ToggleSidebarCommand = ReactiveCommand.Create(ToggleSidebar);
@@ -44,23 +41,11 @@ public class MobileMainWindowViewModel : ViewModelBase
         }
     }
 
-    public ViewModelBase CurrentPage
-    {
-        get => _currentPage;
-        private set => this.RaiseAndSetIfChanged(ref _currentPage, value);
-    }
+    public ViewModelBase CurrentPage { get; private set; }
 
-    public bool IsSidebarVisible
-    {
-        get => _isSidebarVisible;
-        set => this.RaiseAndSetIfChanged(ref _isSidebarVisible, value);
-    }
+    public bool IsSidebarVisible { get; set; }
 
-    public string PageTitle
-    {
-        get => _pageTitle;
-        set => this.RaiseAndSetIfChanged(ref _pageTitle, value);
-    }
+    public string PageTitle { get; set; } = "Kakebo";
 
     public bool IsMobile => _platformService.IsMobile;
 

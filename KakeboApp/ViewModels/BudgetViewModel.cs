@@ -18,19 +18,6 @@ public class BudgetViewModel : ViewModelBase
     private readonly IBudgetService _budgetService;
     private readonly ITransactionService _transactionService;
 
-    private int _currentYear = DateTime.Now.Year;
-    private int _currentMonth = DateTime.Now.Month;
-    private MonthlyBudget? _currentBudget;
-    private MonthlyExpenses? _actualExpenses;
-    private BalanceInfo? _balanceInfo;
-
-    // Campos de presupuesto
-    private decimal _plannedIncome;
-    private decimal _survivalBudget;
-    private decimal _optionalBudget;
-    private decimal _cultureBudget;
-    private decimal _unexpectedBudget;
-
     public BudgetViewModel(IBudgetService budgetService, ITransactionService transactionService)
     {
         _budgetService = budgetService;
@@ -47,66 +34,26 @@ public class BudgetViewModel : ViewModelBase
         RefreshDataCommand = ReactiveCommand.CreateFromTask(LoadData);
     }
 
-    public int CurrentYear
-    {
-        get => _currentYear;
-        set => this.RaiseAndSetIfChanged(ref _currentYear, value);
-    }
+    public int CurrentYear { get; set; } = DateTime.Now.Year;
 
-    public int CurrentMonth
-    {
-        get => _currentMonth;
-        set => this.RaiseAndSetIfChanged(ref _currentMonth, value);
-    }
+    public int CurrentMonth { get; set; } = DateTime.Now.Month;
 
-    public MonthlyBudget? CurrentBudget
-    {
-        get => _currentBudget;
-        set => this.RaiseAndSetIfChanged(ref _currentBudget, value);
-    }
+    public MonthlyBudget? CurrentBudget { get; set; }
 
-    public MonthlyExpenses? ActualExpenses
-    {
-        get => _actualExpenses;
-        set => this.RaiseAndSetIfChanged(ref _actualExpenses, value);
-    }
+    public MonthlyExpenses? ActualExpenses { get; set; }
 
-    public BalanceInfo? BalanceInfo
-    {
-        get => _balanceInfo;
-        set => this.RaiseAndSetIfChanged(ref _balanceInfo, value);
-    }
+    public BalanceInfo? BalanceInfo { get; set; }
 
     // Campos editables
-    public decimal PlannedIncome
-    {
-        get => _plannedIncome;
-        set => this.RaiseAndSetIfChanged(ref _plannedIncome, value);
-    }
+    public decimal PlannedIncome { get; set; }
 
-    public decimal SurvivalBudget
-    {
-        get => _survivalBudget;
-        set => this.RaiseAndSetIfChanged(ref _survivalBudget, value);
-    }
+    public decimal SurvivalBudget { get; set; }
 
-    public decimal OptionalBudget
-    {
-        get => _optionalBudget;
-        set => this.RaiseAndSetIfChanged(ref _optionalBudget, value);
-    }
+    public decimal OptionalBudget { get; set; }
 
-    public decimal CultureBudget
-    {
-        get => _cultureBudget;
-        set => this.RaiseAndSetIfChanged(ref _cultureBudget, value);
-    }
+    public decimal CultureBudget { get; set; }
 
-    public decimal UnexpectedBudget
-    {
-        get => _unexpectedBudget;
-        set => this.RaiseAndSetIfChanged(ref _unexpectedBudget, value);
-    }
+    public decimal UnexpectedBudget { get; set; }
 
     // Propiedades calculadas
     public decimal TotalBudget => SurvivalBudget + OptionalBudget + CultureBudget + UnexpectedBudget;

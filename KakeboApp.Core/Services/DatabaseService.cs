@@ -19,6 +19,10 @@ public class DatabaseService : IDatabaseService
 
     public bool IsConnected { get; private set; }
     public DatabaseConfig? CurrentConfig { get; private set; }
+    
+    // Eventos de estado de conexión
+    public event Action? DatabaseConnected;
+    public event Action? DatabaseDisconnected;
 
     public async Task<Result<Unit>> ConnectAsync(DatabaseConfig config)
     {
@@ -26,8 +30,16 @@ public class DatabaseService : IDatabaseService
 
         if (result.IsSuccess)
         {
+            var wasConnected = IsConnected;
             IsConnected = true;
             CurrentConfig = config;
+            
+            // Solo disparar evento si no estaba conectado antes
+            if (!wasConnected)
+            {
+                // Disparar evento en el UI thread para evitar problemas de threading
+                ThreadingHelper.InvokeOnUIThread(() => DatabaseConnected?.Invoke());
+            }
         }
 
         return result;
@@ -106,6 +118,37 @@ public class DatabaseService : IDatabaseService
         catch (Exception ex)
         {
             return new Result<Unit>.Error($"Failed to create database: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<Unit>> DisconnectAsync()
+    {
+        try
+        {
+            await Task.Run(() =>
+            {
+                if (_database is IDisposable disposableDatabase)
+                {
+                    disposableDatabase.Dispose();
+                }
+            });
+
+            var wasConnected = IsConnected;
+            IsConnected = false;
+            CurrentConfig = null;
+            
+            // Solo disparar evento si estaba conectado antes
+            if (wasConnected)
+            {
+                // Disparar evento en el UI thread para evitar problemas de threading
+                ThreadingHelper.InvokeOnUIThread(() => DatabaseDisconnected?.Invoke());
+            }
+            
+            return new Result<Unit>.Success(Unit.Value);
+        }
+        catch (Exception ex)
+        {
+            return new Result<Unit>.Error($"Disconnect failed: {ex.Message}");
         }
     }
 }

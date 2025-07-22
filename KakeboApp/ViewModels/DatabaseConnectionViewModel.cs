@@ -19,11 +19,6 @@ public class DatabaseConnectionViewModel : ViewModelBase
     private readonly IPlatformService _platformService;
     private readonly Subject<Unit> _databaseConnected = new();
 
-    private string _databasePath = string.Empty;
-    private string? _password;
-    private string? _errorMessage;
-    private bool _isConnecting;
-
     public DatabaseConnectionViewModel(IDatabaseService databaseService, IPlatformService platformService)
     {
         _databaseService = databaseService;
@@ -37,76 +32,19 @@ public class DatabaseConnectionViewModel : ViewModelBase
         // Configurar ruta inicial
         var defaultPath = System.IO.Path.Combine(_platformService.GetLocalDataPath(), "kakebo.db");
         DatabasePath = defaultPath;
+        
+        // Observar cambios en IsConnecting para actualizar comandos
+        this.WhenAnyValue(x => x.IsConnecting)
+            .Subscribe(_ => NotifyCanExecuteChanged());
     }
 
-    public string DatabasePath
-    {
-        get => _databasePath;
-        set
-        {
-            if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
-            {
-                this.RaiseAndSetIfChanged(ref _databasePath, value);
-            }
-            else
-            {
-                Avalonia.Threading.Dispatcher.UIThread.Post(() => this.RaiseAndSetIfChanged(ref _databasePath, value));
-            }
-        }
-    }
+    public string DatabasePath { get; set; } = string.Empty;
 
-    public string? Password
-    {
-        get => _password;
-        set
-        {
-            if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
-            {
-                this.RaiseAndSetIfChanged(ref _password, value);
-            }
-            else
-            {
-                Avalonia.Threading.Dispatcher.UIThread.Post(() => this.RaiseAndSetIfChanged(ref _password, value));
-            }
-        }
-    }
+    public string? Password { get; set; }
 
-    public string? ErrorMessage
-    {
-        get => _errorMessage;
-        set
-        {
-            if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
-            {
-                this.RaiseAndSetIfChanged(ref _errorMessage, value);
-            }
-            else
-            {
-                Avalonia.Threading.Dispatcher.UIThread.Post(() => this.RaiseAndSetIfChanged(ref _errorMessage, value));
-            }
-        }
-    }
+    public string? ErrorMessage { get; set; }
 
-    public bool IsConnecting
-    {
-        get => _isConnecting;
-        set
-        {
-            if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
-            {
-                this.RaiseAndSetIfChanged(ref _isConnecting, value);
-                NotifyCanExecuteChanged();
-            }
-            else
-            {
-                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                {
-                    this.RaiseAndSetIfChanged(ref _isConnecting, value);
-                    NotifyCanExecuteChanged();
-                });
-            }
-        }
-    }
+    public bool IsConnecting { get; set; }
 
     public ICommand BrowseFileCommand { get; }
     public ICommand CreateNewCommand { get; }
@@ -195,7 +133,11 @@ public class DatabaseConnectionViewModel : ViewModelBase
             
             if (result.IsSuccess)
             {
-                _databaseConnected.OnNext(Unit.Default);
+                // Disparar evento en el hilo de UI para evitar errores de threading
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    _databaseConnected.OnNext(Unit.Default);
+                });
             }
             else
             {

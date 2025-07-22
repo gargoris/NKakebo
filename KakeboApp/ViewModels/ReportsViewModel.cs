@@ -18,11 +18,6 @@ public class ReportsViewModel : ViewModelBase
     private readonly ITransactionService _transactionService;
     private readonly IBudgetService _budgetService;
 
-    private int _currentYear = DateTime.Now.Year;
-    private int _currentMonth = DateTime.Now.Month;
-    private bool _showDetailedView;
-    private BalanceInfo? _balanceInfo;
-
     public ReportsViewModel(ITransactionService transactionService, IBudgetService budgetService)
     {
         _transactionService = transactionService;
@@ -44,29 +39,13 @@ public class ReportsViewModel : ViewModelBase
     public ObservableCollection<ExpenseByCategory> ExpensesByCategory { get; }
     public ObservableCollection<ExpenseBySubcategory> ExpensesBySubcategory { get; }
 
-    public int CurrentYear
-    {
-        get => _currentYear;
-        set => this.RaiseAndSetIfChanged(ref _currentYear, value);
-    }
+    public int CurrentYear { get; set; } = DateTime.Now.Year;
 
-    public int CurrentMonth
-    {
-        get => _currentMonth;
-        set => this.RaiseAndSetIfChanged(ref _currentMonth, value);
-    }
+    public int CurrentMonth { get; set; } = DateTime.Now.Month;
 
-    public bool ShowDetailedView
-    {
-        get => _showDetailedView;
-        set => this.RaiseAndSetIfChanged(ref _showDetailedView, value);
-    }
+    public bool ShowDetailedView { get; set; }
 
-    public BalanceInfo? BalanceInfo
-    {
-        get => _balanceInfo;
-        set => this.RaiseAndSetIfChanged(ref _balanceInfo, value);
-    }
+    public BalanceInfo? BalanceInfo { get; set; }
 
     public string MonthYearDisplay => $"{GetMonthName(CurrentMonth)} {CurrentYear}";
     public string ViewToggleText => ShowDetailedView ? "Vista por Categorías" : "Vista Detallada";

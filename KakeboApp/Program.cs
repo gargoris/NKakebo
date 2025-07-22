@@ -3,11 +3,13 @@ using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using KakeboApp.Core.Interfaces;
 using KakeboApp.Core.Services;
 using KakeboApp.Core.Data;
+using KakeboApp.Core.Utils;
 using KakeboApp.Services;
 using KakeboApp.ViewModels;
 using KakeboApp.Views;
@@ -60,6 +62,19 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+
+        // Configurar el dispatcher de threading para el Core
+        ThreadingHelper.UIThreadDispatcher = action =>
+        {
+            if (Dispatcher.UIThread.CheckAccess())
+            {
+                action();
+            }
+            else
+            {
+                Dispatcher.UIThread.Post(action);
+            }
+        };
 
         _host = CreateHostBuilder().Build();
         _host.Start();

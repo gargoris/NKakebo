@@ -18,14 +18,6 @@ public class AddEditTransactionViewModel : ViewModelBase
 {
     private readonly ITransactionService _transactionService;
     private Transaction? _originalTransaction;
-    private string _description = string.Empty;
-    private decimal _amount;
-    private DateTime _date = DateTime.Today;
-    private TransactionType _type = TransactionType.Expense;
-    private Category _category = Category.Food;
-    private string? _subcategory;
-    private string? _notes;
-    private bool _isEditing;
 
     private readonly Subject<System.Reactive.Unit> _transactionSaved = new();
     private readonly Subject<System.Reactive.Unit> _cancelled = new();
@@ -59,58 +51,26 @@ public class AddEditTransactionViewModel : ViewModelBase
             .Subscribe(OnTypeChanged);
 
         // Inicializar sugerencias
-        UpdateSuggestedSubcategories(_category);
+        UpdateSuggestedSubcategories(Category.Food);
     }
 
     public ObservableCollection<string> SuggestedSubcategories { get; }
 
-    public string Description
-    {
-        get => _description;
-        set => this.RaiseAndSetIfChanged(ref _description, value);
-    }
+    public string Description { get; set; } = string.Empty;
 
-    public decimal Amount
-    {
-        get => _amount;
-        set => this.RaiseAndSetIfChanged(ref _amount, value);
-    }
+    public decimal Amount { get; set; }
 
-    public DateTime Date
-    {
-        get => _date;
-        set => this.RaiseAndSetIfChanged(ref _date, value);
-    }
+    public DateTime Date { get; set; } = DateTime.Today;
 
-    public TransactionType Type
-    {
-        get => _type;
-        set => this.RaiseAndSetIfChanged(ref _type, value);
-    }
+    public TransactionType Type { get; set; } = TransactionType.Expense;
 
-    public Category Category
-    {
-        get => _category;
-        set => this.RaiseAndSetIfChanged(ref _category, value);
-    }
+    public Category Category { get; set; } = Category.Food;
 
-    public string? Subcategory
-    {
-        get => _subcategory;
-        set => this.RaiseAndSetIfChanged(ref _subcategory, value);
-    }
+    public string? Subcategory { get; set; }
 
-    public string? Notes
-    {
-        get => _notes;
-        set => this.RaiseAndSetIfChanged(ref _notes, value);
-    }
+    public string? Notes { get; set; }
 
-    public bool IsEditing
-    {
-        get => _isEditing;
-        private set => this.RaiseAndSetIfChanged(ref _isEditing, value);
-    }
+    public bool IsEditing { get; private set; }
 
     // Categorías válidas según el tipo
     public IEnumerable<Category> ValidCategories => Type switch

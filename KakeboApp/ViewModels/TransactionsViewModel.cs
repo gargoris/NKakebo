@@ -20,11 +20,6 @@ namespace KakeboApp.ViewModels;
 public class TransactionsViewModel : ViewModelBase
 {
     private readonly ITransactionService _transactionService;
-    private Transaction? _selectedTransaction;
-    private bool _isEditPanelVisible;
-    private string _searchText = string.Empty;
-    private Category? _filterCategory;
-    private TransactionType? _filterType;
 
     public TransactionsViewModel(ITransactionService transactionService)
     {
@@ -58,35 +53,15 @@ public class TransactionsViewModel : ViewModelBase
     public ObservableCollection<Transaction> FilteredTransactions { get; }
     public AddEditTransactionViewModel AddEditViewModel { get; }
 
-    public Transaction? SelectedTransaction
-    {
-        get => _selectedTransaction;
-        set => this.RaiseAndSetIfChanged(ref _selectedTransaction, value);
-    }
+    public Transaction? SelectedTransaction { get; set; }
 
-    public bool IsEditPanelVisible
-    {
-        get => _isEditPanelVisible;
-        set => this.RaiseAndSetIfChanged(ref _isEditPanelVisible, value);
-    }
+    public bool IsEditPanelVisible { get; set; }
 
-    public string SearchText
-    {
-        get => _searchText;
-        set => this.RaiseAndSetIfChanged(ref _searchText, value);
-    }
+    public string SearchText { get; set; } = string.Empty;
 
-    public Category? FilterCategory
-    {
-        get => _filterCategory;
-        set => this.RaiseAndSetIfChanged(ref _filterCategory, value);
-    }
+    public Category? FilterCategory { get; set; }
 
-    public TransactionType? FilterType
-    {
-        get => _filterType;
-        set => this.RaiseAndSetIfChanged(ref _filterType, value);
-    }
+    public TransactionType? FilterType { get; set; }
 
     // Propiedades para UI
     public IEnumerable<Category> AllCategories => Enum.GetValues<Category>();
