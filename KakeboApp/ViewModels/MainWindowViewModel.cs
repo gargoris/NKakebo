@@ -55,9 +55,20 @@ public class MainWindowViewModel : ViewModelBase
         _databaseService.DatabaseConnected += OnDatabaseConnected;
     }
 
-    public ViewModelBase CurrentPage { get; private set; }
+    private ViewModelBase _currentPage = null!;
+    private bool _isConnected;
 
-    public bool IsConnected { get; private set; }
+    public ViewModelBase CurrentPage 
+    { 
+        get => _currentPage;
+        set => this.RaiseAndSetIfChanged(ref _currentPage, value);
+    }
+
+    public bool IsConnected 
+    { 
+        get => _isConnected;
+        set => this.RaiseAndSetIfChanged(ref _isConnected, value);
+    }
 
     // ViewModels de páginas
     public DatabaseConnectionViewModel ConnectionViewModel { get; }
@@ -72,7 +83,12 @@ public class MainWindowViewModel : ViewModelBase
     public ICommand ShowConnectionCommand { get; }
 
     private async Task ShowTransactionsAsync() => await Task.Run(() => CurrentPage = TransactionsViewModel);
-    private async Task ShowBudgetAsync() => await Task.Run(() => CurrentPage = BudgetViewModel);
+    private async Task ShowBudgetAsync()
+    {
+        // Cargar datos del presupuesto antes de mostrar la pantalla
+        await BudgetViewModel.LoadData();
+        CurrentPage = BudgetViewModel;
+    }
     private async Task ShowReportsAsync() => await Task.Run(() => CurrentPage = ReportsViewModel);
     private async Task ShowConnectionAsync() => await Task.Run(() => CurrentPage = ConnectionViewModel);
 
@@ -80,14 +96,20 @@ public class MainWindowViewModel : ViewModelBase
     {
         try
         {
-            IsConnected = true;
-            
-            // Navegar inmediatamente a transacciones
-            CurrentPage = TransactionsViewModel;
-
-            // TODO: Cargar datos de ViewModels de forma thread-safe después de solucionar problema ReactiveCommand
-            // Por ahora omitimos la carga automática para evitar threading issues
-            // Los ViewModels se cargarán cuando el usuario navegue a ellos
+            // Asegurar que los cambios se hagan en el UI thread
+            if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
+            {
+                IsConnected = true;
+                CurrentPage = TransactionsViewModel;
+            }
+            else
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    IsConnected = true;
+                    CurrentPage = TransactionsViewModel;
+                });
+            }
             
             Log.Information("Database connected successfully, navigated to transactions view");
         }

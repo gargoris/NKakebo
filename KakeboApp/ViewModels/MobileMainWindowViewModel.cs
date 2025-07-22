@@ -41,7 +41,13 @@ public class MobileMainWindowViewModel : ViewModelBase
         }
     }
 
-    public ViewModelBase CurrentPage { get; private set; }
+    private ViewModelBase _currentPage = null!;
+
+    public ViewModelBase CurrentPage 
+    { 
+        get => _currentPage;
+        set => this.RaiseAndSetIfChanged(ref _currentPage, value);
+    }
 
     public bool IsSidebarVisible { get; set; }
 

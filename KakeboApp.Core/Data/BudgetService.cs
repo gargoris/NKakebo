@@ -52,13 +52,10 @@ public class BudgetService : IBudgetService
         );
     }
 
-    public async Task<MonthlyBudget> SaveMonthlyBudgetAsync(MonthlyBudget budget)
+    public async Task<Result<MonthlyBudget>> SaveMonthlyBudgetAsync(MonthlyBudget budget)
     {
         var result = await _database.SaveMonthlyBudgetAsync(budget);
-        return result.Match(
-            savedBudget => savedBudget,
-            error => throw new InvalidOperationException($"Database error: {error}")
-        );
+        return result;
     }
 
     public async Task<IReadOnlyList<MonthlyBudget>> GetAllBudgetsAsync()

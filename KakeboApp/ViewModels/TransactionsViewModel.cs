@@ -110,31 +110,37 @@ public class TransactionsViewModel : ViewModelBase
 
     private void AddTransaction()
     {
-        AddEditViewModel.StartAdd();
-        IsEditPanelVisible = true;
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            AddEditViewModel.StartAdd();
+            IsEditPanelVisible = true;
+        });
     }
 
     private void EditTransaction(Transaction transaction)
     {
-        AddEditViewModel.StartEdit(transaction);
-        IsEditPanelVisible = true;
-        SelectedTransaction = transaction;
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            AddEditViewModel.StartEdit(transaction);
+            IsEditPanelVisible = true;
+        });
     }
 
     private async Task DeleteTransaction(Transaction transaction)
     {
+        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => IsBusy = true);
         try
         {
-            if (transaction.Id.HasValue)
-            {
-                await _transactionService.DeleteTransactionAsync(transaction.Id.Value);
-                Transactions.Remove(transaction);
-                ApplyFilters();
-            }
+            await _transactionService.DeleteTransactionAsync(transaction.Id!.Value);
+            await LoadTransactions();
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Error deleting transaction");
+        }
+        finally
+        {
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => IsBusy = false);
         }
     }
 

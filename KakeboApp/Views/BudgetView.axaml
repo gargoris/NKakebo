@@ -38,7 +38,7 @@
                     
                     <TextBlock Grid.Row="1" Text="Ingresos Planificados:" VerticalAlignment="Center"/>
                     <NumericUpDown Grid.Row="1" Grid.Column="1" 
-                                  Value="{Binding PlannedIncome}" 
+                                  Value="{Binding PlannedIncome, Mode=TwoWay}" 
                                   FormatString="C" 
                                   Margin="10,5"/>
                     
@@ -72,6 +72,13 @@
                            Background="#3498DB" 
                            Foreground="White" 
                            Margin="0,15,0,0"/>
+
+                    <TextBlock Grid.Row="7" Grid.ColumnSpan="2"
+                               Text="{Binding ErrorMessage}"
+                               Foreground="Red"
+                               FontWeight="Bold"
+                               Margin="0,10,0,0"
+                               Visibility="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}"/>
                 </Grid>
             </Border>
             

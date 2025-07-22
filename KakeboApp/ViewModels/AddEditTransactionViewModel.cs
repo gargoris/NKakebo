@@ -70,7 +70,7 @@ public class AddEditTransactionViewModel : ViewModelBase
 
     public string? Notes { get; set; }
 
-    public bool IsEditing { get; private set; }
+    public bool IsEditing { get; set; }
 
     // Categorías válidas según el tipo
     public IEnumerable<Category> ValidCategories => Type switch
@@ -128,7 +128,7 @@ public class AddEditTransactionViewModel : ViewModelBase
 
     private async Task SaveTransaction()
     {
-        IsBusy = true;
+        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => IsBusy = true);
         try
         {
             var transaction = new Transaction
@@ -152,7 +152,7 @@ public class AddEditTransactionViewModel : ViewModelBase
                 await _transactionService.AddTransactionAsync(transaction);
             }
 
-            _transactionSaved.OnNext(System.Reactive.Unit.Default);
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => _transactionSaved.OnNext(System.Reactive.Unit.Default));
         }
         catch (Exception ex)
         {
@@ -160,7 +160,7 @@ public class AddEditTransactionViewModel : ViewModelBase
         }
         finally
         {
-            IsBusy = false;
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => IsBusy = false);
         }
     }
 
@@ -197,7 +197,7 @@ public class AddEditTransactionViewModel : ViewModelBase
             Category = CategoryUtils.GetDefaultCategoryForType(type);
         }
 
-        // Notificar cambio en categorías válidas
+        // Forzar notificación de ValidCategories ya que es una computed property
         this.RaisePropertyChanged(nameof(ValidCategories));
     }
 }

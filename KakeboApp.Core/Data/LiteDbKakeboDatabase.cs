@@ -266,10 +266,13 @@ public class LiteDbKakeboDatabase : IKakeboDatabase, IDisposable
                 var collection = _database.GetCollection<BudgetDocument>(BudgetsCollection);
                 var document = MapToBudgetDocument(budget);
 
-                if (budget.Id.HasValue)
+                // Upsert logic: check if a budget for the same (Year, Month) exists
+                var existing = collection.FindOne(b => b.Year == budget.Year && b.Month == budget.Month);
+                if (existing != null)
                 {
+                    document.Id = existing.Id; // Ensure we update the correct document
                     collection.Update(document);
-                    return budget;
+                    return budget with { Id = existing.Id };
                 }
                 else
                 {
