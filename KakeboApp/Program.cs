@@ -54,6 +54,8 @@ public class Program
 public partial class App : Application
 {
     private IHost? _host;
+    
+    public IHost? Host => _host;
 
     public override void Initialize()
     {
@@ -92,7 +94,7 @@ public partial class App : Application
     }
 
     private static IHostBuilder CreateHostBuilder() =>
-        Host.CreateDefaultBuilder()
+        Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
             .UseSerilog(Log.Logger, dispose: true) // Integrar Serilog como logger global
             .ConfigureServices((context, services) =>
             {

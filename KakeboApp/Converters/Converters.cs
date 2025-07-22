@@ -152,11 +152,18 @@ public class CategoryDisplayConverter : IValueConverter
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is Category category)
+        try
         {
-            return CategoryUtils.GetCategoryDisplayName(category);
+            if (value is Category category)
+            {
+                return CategoryUtils.GetCategoryDisplayName(category);
+            }
+            return value?.ToString() ?? "Desconocida";
         }
-        return value?.ToString();
+        catch (Exception)
+        {
+            return "Error";
+        }
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
