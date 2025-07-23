@@ -14,6 +14,7 @@ using KakeboApp.Core.Utils;
 using KakeboApp.Utils;
 using Unit = System.Reactive.Unit;
 using Serilog;
+using Avalonia.Threading;
 
 namespace KakeboApp.ViewModels;
 

@@ -9,10 +9,10 @@ using System.Threading.Tasks;
 using KakeboApp.Core.Interfaces;
 using KakeboApp.Core.Models;
 using KakeboApp.Core.Utils;
-using KakeboApp.ViewModels;
 using ReactiveUI;
-using System.Reactive;
-using Serilog;
+
+
+namespace KakeboApp.ViewModels;
 
 public class AddEditTransactionViewModel : ViewModelBase
 {
@@ -158,7 +158,7 @@ public class AddEditTransactionViewModel : ViewModelBase
             }
             else
             {
-                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => 
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
                     _transactionSaved.OnNext(System.Reactive.Unit.Default));
             }
         }, "SaveTransaction");
