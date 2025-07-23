@@ -29,10 +29,10 @@ public class MobileMainWindowViewModel : ViewModelBase
         CurrentPage = TransactionsViewModel;
 
         // Comandos
-        ToggleSidebarCommand = ReactiveCommand.Create(ToggleSidebar);
-        ShowTransactionsCommand = ReactiveCommand.Create(() => NavigateTo(TransactionsViewModel, "Transacciones"));
-        ShowBudgetCommand = ReactiveCommand.Create(() => NavigateTo(BudgetViewModel, "Presupuesto"));
-        ShowReportsCommand = ReactiveCommand.Create(() => NavigateTo(ReportsViewModel, "Reportes"));
+        ToggleSidebarCommand = ReactiveCommand.Create(ToggleSidebar, outputScheduler: RxApp.MainThreadScheduler);
+        ShowTransactionsCommand = ReactiveCommand.Create(() => NavigateTo(TransactionsViewModel, "Transacciones"), outputScheduler: RxApp.MainThreadScheduler);
+        ShowBudgetCommand = ReactiveCommand.Create(() => NavigateTo(BudgetViewModel, "Presupuesto"), outputScheduler: RxApp.MainThreadScheduler);
+        ShowReportsCommand = ReactiveCommand.Create(() => NavigateTo(ReportsViewModel, "Reportes"), outputScheduler: RxApp.MainThreadScheduler);
 
         // Auto-inicializar base de datos en móvil
         if (_platformService.IsMobile)

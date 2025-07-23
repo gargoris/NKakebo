@@ -12,6 +12,7 @@ using KakeboApp.Core.Services;
 using KakeboApp.ViewModels;
 using KakeboApp.Commands;
 using ReactiveUI;
+using ReactiveUI.Fody.Helpers;
 using Serilog;
 
 namespace KakeboApp.ViewModels;
@@ -32,8 +33,8 @@ public class ReportsViewModel : ViewModelBase
         // Comandos - usando AsyncCommand para navegación de mes para evitar threading issues
         PreviousMonthCommand = new AsyncCommand(PreviousMonth);
         NextMonthCommand = new AsyncCommand(NextMonth);
-        ToggleViewCommand = ReactiveCommand.Create(ToggleView);
-        RefreshDataCommand = ReactiveCommand.CreateFromTask(LoadData);
+        ToggleViewCommand = ReactiveCommand.Create(ToggleView, outputScheduler: RxApp.MainThreadScheduler);
+        RefreshDataCommand = ReactiveCommand.CreateFromTask(LoadData, outputScheduler: RxApp.MainThreadScheduler);
 
         // Cargar datos iniciales de forma asíncrona
         // _ = Task.Run(LoadData);
@@ -42,13 +43,10 @@ public class ReportsViewModel : ViewModelBase
     public ObservableCollection<ExpenseByCategory> ExpensesByCategory { get; }
     public ObservableCollection<ExpenseBySubcategory> ExpensesBySubcategory { get; }
 
-    public int CurrentYear { get; set; } = DateTime.Now.Year;
-
-    public int CurrentMonth { get; set; } = DateTime.Now.Month;
-
-    public bool ShowDetailedView { get; set; }
-
-    public BalanceInfo? BalanceInfo { get; set; }
+    [Reactive] public int CurrentYear { get; set; } = DateTime.Now.Year;
+    [Reactive] public int CurrentMonth { get; set; } = DateTime.Now.Month;
+    [Reactive] public bool ShowDetailedView { get; set; }
+    [Reactive] public BalanceInfo? BalanceInfo { get; set; }
 
     public string MonthYearDisplay => $"{GetMonthName(CurrentMonth)} {CurrentYear}";
     public string ViewToggleText => ShowDetailedView ? "Vista por Categorías" : "Vista Detallada";

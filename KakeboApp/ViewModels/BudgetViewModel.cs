@@ -62,11 +62,13 @@ public partial class BudgetViewModel : ViewModelBase
             x => x.CultureBudget,
             x => x.UnexpectedBudget,
             x => x.PlannedIncome)
+            .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(_ => UpdateCalculatedProperties());
 
         this.WhenAnyValue(
             x => x.CurrentYear,
             x => x.CurrentMonth)
+            .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(_ => this.RaisePropertyChanged(nameof(MonthYearDisplay)));
     }
 

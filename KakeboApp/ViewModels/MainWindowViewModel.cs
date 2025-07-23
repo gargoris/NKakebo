@@ -12,6 +12,7 @@ using KakeboApp.ViewModels;
 using KakeboApp.Utils;
 using KakeboApp.Commands;
 using ReactiveUI;
+using ReactiveUI.Fody.Helpers;
 using Serilog;
 
 namespace KakeboApp.ViewModels;
@@ -47,28 +48,18 @@ public class MainWindowViewModel : ViewModelBase
         // Estado inicial
         IsConnected = _databaseService.IsConnected;
         
-        // ✅ AQUÍ ESTÁ LA CORRECCIÓN: Suscribirse al evento de conexión
-        ConnectionViewModel.DatabaseConnected.Subscribe(_ => OnDatabaseConnected());
+        // ✅ AQUÍ ESTÁ LA CORRECCIÓN: Suscribirse al evento de conexión con UI thread
+        ConnectionViewModel.DatabaseConnected
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Subscribe(_ => OnDatabaseConnected());
         
         // También suscribirse al evento del servicio para mayor seguridad
         // El evento ya viene del UI thread gracias al ThreadingHelper
         _databaseService.DatabaseConnected += OnDatabaseConnected;
     }
 
-    private ViewModelBase _currentPage = null!;
-    private bool _isConnected;
-
-    public ViewModelBase CurrentPage 
-    { 
-        get => _currentPage;
-        set => this.RaiseAndSetIfChanged(ref _currentPage, value);
-    }
-
-    public bool IsConnected 
-    { 
-        get => _isConnected;
-        set => this.RaiseAndSetIfChanged(ref _isConnected, value);
-    }
+    [Reactive] public ViewModelBase CurrentPage { get; set; } = null!;
+    [Reactive] public bool IsConnected { get; set; }
 
     // ViewModels de páginas
     public DatabaseConnectionViewModel ConnectionViewModel { get; }

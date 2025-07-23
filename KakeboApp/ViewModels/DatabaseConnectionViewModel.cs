@@ -10,6 +10,7 @@ using KakeboApp.Commands;
 using KakeboApp.Core.Interfaces;
 using KakeboApp.Core.Models;
 using ReactiveUI;
+using ReactiveUI.Fody.Helpers;
 
 namespace KakeboApp.ViewModels;
 
@@ -35,16 +36,14 @@ public class DatabaseConnectionViewModel : ViewModelBase
         
         // Observar cambios en IsConnecting para actualizar comandos
         this.WhenAnyValue(x => x.IsConnecting)
+            .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(_ => NotifyCanExecuteChanged());
     }
 
-    public string DatabasePath { get; set; } = string.Empty;
-
-    public string? Password { get; set; }
-
-    public new string? ErrorMessage { get; set; }
-
-    public bool IsConnecting { get; set; }
+    [Reactive] public string DatabasePath { get; set; } = string.Empty;
+    [Reactive] public string? Password { get; set; }
+    [Reactive] public new string? ErrorMessage { get; set; }
+    [Reactive] public bool IsConnecting { get; set; }
 
     public ICommand BrowseFileCommand { get; }
     public ICommand CreateNewCommand { get; }

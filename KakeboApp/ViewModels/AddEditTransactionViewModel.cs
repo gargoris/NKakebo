@@ -9,7 +9,9 @@ using System.Threading.Tasks;
 using KakeboApp.Core.Interfaces;
 using KakeboApp.Core.Models;
 using KakeboApp.Core.Utils;
+using KakeboApp.Utils;
 using ReactiveUI;
+using ReactiveUI.Fody.Helpers;
 
 
 namespace KakeboApp.ViewModels;
@@ -35,19 +37,21 @@ public class AddEditTransactionViewModel : ViewModelBase
             x => x.IsBusy,
             (desc, amount, busy) => !string.IsNullOrWhiteSpace(desc) && amount > 0 && !busy);
 
-        SaveCommand = ReactiveCommand.CreateFromTask(SaveTransaction, canSave);
-        CancelCommand = ReactiveCommand.Create(Cancel);
+        SaveCommand = ReactiveCommand.CreateFromTask(SaveTransaction, canSave, RxApp.MainThreadScheduler);
+        CancelCommand = ReactiveCommand.Create(Cancel, outputScheduler: RxApp.MainThreadScheduler);
 
         // Comandos de subcategoría
-        SelectSubcategoryCommand = ReactiveCommand.Create<string>(SelectSubcategory);
-        ClearSubcategoryCommand = ReactiveCommand.Create(ClearSubcategory);
+        SelectSubcategoryCommand = ReactiveCommand.Create<string>(SelectSubcategory, outputScheduler: RxApp.MainThreadScheduler);
+        ClearSubcategoryCommand = ReactiveCommand.Create(ClearSubcategory, outputScheduler: RxApp.MainThreadScheduler);
 
         // Actualizar sugerencias cuando cambia la categoría
         this.WhenAnyValue(x => x.Category)
+            .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(UpdateSuggestedSubcategories);
 
         // Actualizar categorías válidas cuando cambia el tipo
         this.WhenAnyValue(x => x.Type)
+            .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(OnTypeChanged);
 
         // Inicializar sugerencias
@@ -56,21 +60,14 @@ public class AddEditTransactionViewModel : ViewModelBase
 
     public ObservableCollection<string> SuggestedSubcategories { get; }
 
-    public string Description { get; set; } = string.Empty;
-
-    public decimal Amount { get; set; }
-
-    public DateTime Date { get; set; } = DateTime.Today;
-
-    public TransactionType Type { get; set; } = TransactionType.Expense;
-
-    public Category Category { get; set; } = Category.Food;
-
-    public string? Subcategory { get; set; }
-
-    public string? Notes { get; set; }
-
-    public bool IsEditing { get; set; }
+    [Reactive] public string Description { get; set; } = string.Empty;
+    [Reactive] public decimal Amount { get; set; }
+    [Reactive] public DateTime Date { get; set; } = DateTime.Today;
+    [Reactive] public TransactionType Type { get; set; } = TransactionType.Expense;
+    [Reactive] public Category Category { get; set; } = Category.Food;
+    [Reactive] public string? Subcategory { get; set; }
+    [Reactive] public string? Notes { get; set; }
+    [Reactive] public bool IsEditing { get; set; }
 
     // Categorías válidas según el tipo
     public IEnumerable<Category> ValidCategories => Type switch
@@ -152,21 +149,15 @@ public class AddEditTransactionViewModel : ViewModelBase
             }
 
             // Notificar que la transacción se guardó correctamente
-            if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
-            {
-                _transactionSaved.OnNext(System.Reactive.Unit.Default);
-            }
-            else
-            {
-                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
-                    _transactionSaved.OnNext(System.Reactive.Unit.Default));
-            }
+            UIThreadHelper.InvokeOnUIThread(() => 
+                _transactionSaved.OnNext(System.Reactive.Unit.Default));
         }, "SaveTransaction");
     }
 
     private void Cancel()
     {
-        _cancelled.OnNext(System.Reactive.Unit.Default);
+        UIThreadHelper.InvokeOnUIThread(() => 
+            _cancelled.OnNext(System.Reactive.Unit.Default));
     }
 
     private void SelectSubcategory(string subcategory)

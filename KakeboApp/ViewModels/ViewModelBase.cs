@@ -1,4 +1,5 @@
 using ReactiveUI;
+using ReactiveUI.Fody.Helpers;
 using System;
 using System.Reactive;
 using System.Reactive.Subjects;
@@ -18,52 +19,15 @@ namespace KakeboApp.ViewModels;
 /// </summary>
 public abstract class ViewModelBase : ReactiveObject
 {
-    private bool _isBusy;
-    private string _errorMessage = string.Empty;
-    
     /// <summary>
     /// Indica si el ViewModel está ocupado procesando una operación
     /// </summary>
-    public bool IsBusy
-    {
-        get => _isBusy;
-        set 
-        {
-            if (Dispatcher.UIThread.CheckAccess())
-            {
-                this.RaiseAndSetIfChanged(ref _isBusy, value);
-            }
-            else
-            {
-                bool localValue = value;
-                Dispatcher.UIThread.Post(() => {
-                    this.RaiseAndSetIfChanged(ref _isBusy, localValue);
-                });
-            }
-        }
-    }
+    [Reactive] public bool IsBusy { get; set; }
     
     /// <summary>
     /// Mensaje de error actual
     /// </summary>
-    public string ErrorMessage
-    {
-        get => _errorMessage;
-        set 
-        {
-            if (Dispatcher.UIThread.CheckAccess())
-            {
-                this.RaiseAndSetIfChanged(ref _errorMessage, value);
-            }
-            else
-            {
-                string localValue = value;
-                Dispatcher.UIThread.Post(() => {
-                    this.RaiseAndSetIfChanged(ref _errorMessage, localValue);
-                });
-            }
-        }
-    }
+    [Reactive] public string ErrorMessage { get; set; } = string.Empty;
     
     /// <summary>
     /// Método para manejar excepciones de manera consistente
@@ -74,15 +38,9 @@ public abstract class ViewModelBase : ReactiveObject
         
         Log.Error(ex, "Error in {Operation}: {Message}", operation, ex.Message);
         
-        if (Dispatcher.UIThread.CheckAccess())
-        {
+        UIThreadHelper.InvokeOnUIThread(() => {
             ErrorMessage = $"Error: {ex.Message}";
-        }
-        else
-        {
-            string errorMsg = $"Error: {ex.Message}";
-            Dispatcher.UIThread.Post(() => ErrorMessage = errorMsg);
-        }
+        });
     }
     
     /// <summary>
@@ -97,18 +55,10 @@ public abstract class ViewModelBase : ReactiveObject
         }
         
         // Limpiar error anterior y establecer estado ocupado
-        if (Dispatcher.UIThread.CheckAccess())
-        {
+        UIThreadHelper.InvokeOnUIThread(() => {
             ErrorMessage = string.Empty;
             IsBusy = true;
-        }
-        else
-        {
-            Dispatcher.UIThread.Post(() => {
-                ErrorMessage = string.Empty;
-                IsBusy = true;
-            });
-        }
+        });
         
         try
         {
@@ -121,14 +71,7 @@ public abstract class ViewModelBase : ReactiveObject
         finally
         {
             // Restablecer estado ocupado
-            if (Dispatcher.UIThread.CheckAccess())
-            {
-                IsBusy = false;
-            }
-            else
-            {
-                Dispatcher.UIThread.Post(() => IsBusy = false);
-            }
+            UIThreadHelper.InvokeOnUIThread(() => IsBusy = false);
         }
     }
     
@@ -144,18 +87,10 @@ public abstract class ViewModelBase : ReactiveObject
         }
         
         // Limpiar error anterior y establecer estado ocupado
-        if (Dispatcher.UIThread.CheckAccess())
-        {
+        UIThreadHelper.InvokeOnUIThread(() => {
             ErrorMessage = string.Empty;
             IsBusy = true;
-        }
-        else
-        {
-            Dispatcher.UIThread.Post(() => {
-                ErrorMessage = string.Empty;
-                IsBusy = true;
-            });
-        }
+        });
         
         try
         {
@@ -169,14 +104,7 @@ public abstract class ViewModelBase : ReactiveObject
         finally
         {
             // Restablecer estado ocupado
-            if (Dispatcher.UIThread.CheckAccess())
-            {
-                IsBusy = false;
-            }
-            else
-            {
-                Dispatcher.UIThread.Post(() => IsBusy = false);
-            }
+            UIThreadHelper.InvokeOnUIThread(() => IsBusy = false);
         }
     }
 }

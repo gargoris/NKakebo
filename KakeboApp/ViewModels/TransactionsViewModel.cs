@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ReactiveUI;
+using ReactiveUI.Fody.Helpers;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
@@ -22,11 +23,6 @@ namespace KakeboApp.ViewModels;
 public class TransactionsViewModel : ViewModelBase
 {
     private readonly ITransactionService _transactionService;
-    private Transaction? _selectedTransaction;
-    private bool _isEditPanelVisible;
-    private string _searchText = string.Empty;
-    private Category? _filterCategory;
-    private TransactionType? _filterType;
 
     public TransactionsViewModel(ITransactionService transactionService)
     {
@@ -38,19 +34,24 @@ public class TransactionsViewModel : ViewModelBase
 
         // Comandos con manejo de errores
         RefreshDataCommand = new AsyncCommand(LoadTransactions, null, ex => HandleException(ex, "Error al cargar transacciones"));
-        AddTransactionCommand = ReactiveCommand.Create(AddTransaction);
-        EditTransactionCommand = ReactiveCommand.Create<Transaction>(EditTransaction);
+        AddTransactionCommand = ReactiveCommand.Create(AddTransaction, outputScheduler: RxApp.MainThreadScheduler);
+        EditTransactionCommand = ReactiveCommand.Create<Transaction>(EditTransaction, outputScheduler: RxApp.MainThreadScheduler);
         DeleteTransactionCommand = new AsyncCommand<Transaction>(DeleteTransaction, null, ex => HandleException(ex, "Error al eliminar transacción"));
-        CloseEditPanelCommand = ReactiveCommand.Create(CloseEditPanel);
+        CloseEditPanelCommand = ReactiveCommand.Create(CloseEditPanel, outputScheduler: RxApp.MainThreadScheduler);
 
         // ViewModel de edición
         AddEditViewModel = new AddEditTransactionViewModel(_transactionService);
-        AddEditViewModel.TransactionSaved.Subscribe(_ => OnTransactionSaved());
-        AddEditViewModel.Cancelled.Subscribe(_ => CloseEditPanel());
+        AddEditViewModel.TransactionSaved
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Subscribe(_ => OnTransactionSaved());
+        AddEditViewModel.Cancelled
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Subscribe(_ => CloseEditPanel());
 
         // Filtros reactivos
         this.WhenAnyValue(x => x.SearchText, x => x.FilterCategory, x => x.FilterType)
             .Throttle(TimeSpan.FromMilliseconds(300))
+            .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(_ => ApplyFilters());
 
         // Cargar datos iniciales de forma asíncrona
@@ -62,35 +63,11 @@ public class TransactionsViewModel : ViewModelBase
     public ThreadSafeObservableCollection<Transaction> FilteredTransactions { get; }
     public AddEditTransactionViewModel AddEditViewModel { get; }
 
-    public Transaction? SelectedTransaction
-    {
-        get => _selectedTransaction;
-        set => this.RaiseAndSetIfChanged(ref _selectedTransaction, value);
-    }
-
-    public bool IsEditPanelVisible
-    {
-        get => _isEditPanelVisible;
-        set => this.RaiseAndSetIfChanged(ref _isEditPanelVisible, value);
-    }
-
-    public string SearchText
-    {
-        get => _searchText;
-        set => this.RaiseAndSetIfChanged(ref _searchText, value);
-    }
-
-    public Category? FilterCategory
-    {
-        get => _filterCategory;
-        set => this.RaiseAndSetIfChanged(ref _filterCategory, value);
-    }
-
-    public TransactionType? FilterType
-    {
-        get => _filterType;
-        set => this.RaiseAndSetIfChanged(ref _filterType, value);
-    }
+    [Reactive] public Transaction? SelectedTransaction { get; set; }
+    [Reactive] public bool IsEditPanelVisible { get; set; }
+    [Reactive] public string SearchText { get; set; } = string.Empty;
+    [Reactive] public Category? FilterCategory { get; set; }
+    [Reactive] public TransactionType? FilterType { get; set; }
 
     // Propiedades para UI
     public IEnumerable<Category> AllCategories => Enum.GetValues<Category>();
