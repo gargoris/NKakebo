@@ -42,7 +42,7 @@ public class DatabaseConnectionViewModel : ViewModelBase
 
     public string? Password { get; set; }
 
-    public string? ErrorMessage { get; set; }
+    public new string? ErrorMessage { get; set; }
 
     public bool IsConnecting { get; set; }
 

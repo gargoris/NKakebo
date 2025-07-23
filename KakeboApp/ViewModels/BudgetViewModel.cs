@@ -11,6 +11,7 @@ using KakeboApp.Core.Models;
 using KakeboApp.Core.Services;
 using KakeboApp.Core.Utils;
 using KakeboApp.Commands;
+using KakeboApp.Utils;
 using Unit = System.Reactive.Unit;
 using Serilog;
 using ReactiveUI.Fody.Helpers;
@@ -115,14 +116,13 @@ public partial class BudgetViewModel : ViewModelBase
     // Renombra el método original a privado para uso interno
     private async Task LoadDataInternal()
     {
-        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => IsBusy = true);
-        try
+        await ExecuteSafelyAsync(async () =>
         {
             var budget = await _budgetService.GetMonthlyBudgetAsync(CurrentYear, CurrentMonth);
             var expenses = await _budgetService.CalculateActualExpensesAsync(CurrentYear, CurrentMonth);
             var balance = await _transactionService.GetBalanceAsync(CurrentYear, CurrentMonth);
 
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            UIThreadHelper.InvokeOnUIThread(() =>
             {
                 CurrentBudget = budget;
                 ActualExpenses = expenses;
@@ -130,15 +130,7 @@ public partial class BudgetViewModel : ViewModelBase
                 LoadBudgetFields(budget);
                 UpdateCalculatedProperties();
             });
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Error loading budget data");
-        }
-        finally
-        {
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => IsBusy = false);
-        }
+        }, "LoadBudgetData");
     }
 
     private void LoadBudgetFields(MonthlyBudget? budget)
@@ -162,12 +154,11 @@ public partial class BudgetViewModel : ViewModelBase
         }
     }
 
-    public string? ErrorMessage { get; set; }
+    public new string? ErrorMessage { get; set; }
 
     private async Task SaveBudget()
     {
-        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => { IsBusy = true; ErrorMessage = null; });
-        try
+        await ExecuteSafelyAsync(async () =>
         {
             var budget = new MonthlyBudget
             {
@@ -185,98 +176,67 @@ public partial class BudgetViewModel : ViewModelBase
             if (saved.IsSuccess)
             {
                 var result = saved.GetValue();
-                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                UIThreadHelper.InvokeOnUIThread(() =>
                 {
                     CurrentBudget = result;
                     ErrorMessage = null;
                 });
+                
                 // Recargar todos los datos para asegurar que todo esté actualizado
                 await ReloadDataAfterSave();
+                
+                Log.Information("Budget saved successfully for {Year}-{Month}", CurrentYear, CurrentMonth);
             }
             else
             {
                 var error = saved.GetError();
-                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                UIThreadHelper.InvokeOnUIThread(() =>
                 {
                     ErrorMessage = error;
                 });
             }
-            Log.Information("Budget saved successfully for {Year}-{Month}", CurrentYear, CurrentMonth);
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Error saving budget");
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => ErrorMessage = ex.Message);
-        }
-        finally
-        {
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => IsBusy = false);
-        }
+        }, "SaveBudget");
     }
 
     private async Task ReloadDataAfterSave()
     {
-        try
+        await ExecuteSafelyAsync(async () =>
         {
             // Recargar expenses y balance info después de guardar
             var expenses = await _budgetService.CalculateActualExpensesAsync(CurrentYear, CurrentMonth);
             var balance = await _transactionService.GetBalanceAsync(CurrentYear, CurrentMonth);
 
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            UIThreadHelper.InvokeOnUIThread(() =>
             {
                 ActualExpenses = expenses;
                 BalanceInfo = balance;
                 UpdateCalculatedProperties();
             });
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Error reloading data after save");
-        }
+        }, "ReloadDataAfterSave");
     }
 
     private async Task PreviousMonth()
     {
         var (year, month) = DateHelpers.GetPreviousMonth(CurrentYear, CurrentMonth);
         
-        // Asegurar que los cambios se hagan en el UI thread
-        if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
+        await UIThreadHelper.InvokeOnUIThreadAsync(async () =>
         {
             CurrentYear = year;
             CurrentMonth = month;
             await LoadData();
-        }
-        else
-        {
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
-            {
-                CurrentYear = year;
-                CurrentMonth = month;
-                await LoadData();
-            });
-        }
+        });
     }
 
     private async Task NextMonth()
     {
         var (year, month) = DateHelpers.GetNextMonth(CurrentYear, CurrentMonth);
         
-        // Asegurar que los cambios se hagan en el UI thread
-        if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
+        await UIThreadHelper.InvokeOnUIThreadAsync(async () =>
         {
             CurrentYear = year;
             CurrentMonth = month;
             await LoadData();
-        }
-        else
-        {
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
-            {
-                CurrentYear = year;
-                CurrentMonth = month;
-                await LoadData();
-            });
-        }
+        });
     }
 
     private void UpdateCalculatedProperties()

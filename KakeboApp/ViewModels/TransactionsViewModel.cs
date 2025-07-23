@@ -1,18 +1,19 @@
 using System;
 using System.Collections.Generic;
 using ReactiveUI;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
+using KakeboApp.Collections;
+using KakeboApp.Commands;
 using KakeboApp.Core.Interfaces;
 using KakeboApp.Core.Models;
 using KakeboApp.Core.Utils;
 using KakeboApp.Utils;
 using Unit = System.Reactive.Unit;
 using Serilog;
-using Avalonia.Threading;
 
 namespace KakeboApp.ViewModels;
 
@@ -20,19 +21,25 @@ namespace KakeboApp.ViewModels;
 public class TransactionsViewModel : ViewModelBase
 {
     private readonly ITransactionService _transactionService;
+    private Transaction? _selectedTransaction;
+    private bool _isEditPanelVisible;
+    private string _searchText = string.Empty;
+    private Category? _filterCategory;
+    private TransactionType? _filterType;
 
     public TransactionsViewModel(ITransactionService transactionService)
     {
-        _transactionService = transactionService;
+        _transactionService = transactionService ?? throw new ArgumentNullException(nameof(transactionService));
 
-        Transactions = new ObservableCollection<Transaction>();
-        FilteredTransactions = new ObservableCollection<Transaction>();
+        // Usar ThreadSafeObservableCollection en lugar de ObservableCollection
+        Transactions = new ThreadSafeObservableCollection<Transaction>();
+        FilteredTransactions = new ThreadSafeObservableCollection<Transaction>();
 
-        // Comandos
-        RefreshDataCommand = ReactiveCommand.CreateFromTask(LoadTransactions);
+        // Comandos con manejo de errores
+        RefreshDataCommand = new AsyncCommand(LoadTransactions, null, ex => HandleException(ex, "Error al cargar transacciones"));
         AddTransactionCommand = ReactiveCommand.Create(AddTransaction);
         EditTransactionCommand = ReactiveCommand.Create<Transaction>(EditTransaction);
-        DeleteTransactionCommand = ReactiveCommand.CreateFromTask<Transaction>(DeleteTransaction);
+        DeleteTransactionCommand = new AsyncCommand<Transaction>(DeleteTransaction, null, ex => HandleException(ex, "Error al eliminar transacción"));
         CloseEditPanelCommand = ReactiveCommand.Create(CloseEditPanel);
 
         // ViewModel de edición
@@ -46,108 +53,142 @@ public class TransactionsViewModel : ViewModelBase
             .Subscribe(_ => ApplyFilters());
 
         // Cargar datos iniciales de forma asíncrona
-        // _ = Task.Run(LoadData);
+        _ = Initialize();
     }
 
-    public ObservableCollection<Transaction> Transactions { get; }
-    public ObservableCollection<Transaction> FilteredTransactions { get; }
+    // Propiedades con notificación de cambios
+    public ThreadSafeObservableCollection<Transaction> Transactions { get; }
+    public ThreadSafeObservableCollection<Transaction> FilteredTransactions { get; }
     public AddEditTransactionViewModel AddEditViewModel { get; }
 
-    public Transaction? SelectedTransaction { get; set; }
+    public Transaction? SelectedTransaction
+    {
+        get => _selectedTransaction;
+        set => this.RaiseAndSetIfChanged(ref _selectedTransaction, value);
+    }
 
-    public bool IsEditPanelVisible { get; set; }
+    public bool IsEditPanelVisible
+    {
+        get => _isEditPanelVisible;
+        set => this.RaiseAndSetIfChanged(ref _isEditPanelVisible, value);
+    }
 
-    public string SearchText { get; set; } = string.Empty;
+    public string SearchText
+    {
+        get => _searchText;
+        set => this.RaiseAndSetIfChanged(ref _searchText, value);
+    }
 
-    public Category? FilterCategory { get; set; }
+    public Category? FilterCategory
+    {
+        get => _filterCategory;
+        set => this.RaiseAndSetIfChanged(ref _filterCategory, value);
+    }
 
-    public TransactionType? FilterType { get; set; }
+    public TransactionType? FilterType
+    {
+        get => _filterType;
+        set => this.RaiseAndSetIfChanged(ref _filterType, value);
+    }
 
     // Propiedades para UI
     public IEnumerable<Category> AllCategories => Enum.GetValues<Category>();
     public IEnumerable<TransactionType> AllTypes => Enum.GetValues<TransactionType>();
 
     // Comandos
-    public ReactiveCommand<Unit, Unit> RefreshDataCommand { get; }
+    public ICommand RefreshDataCommand { get; }
     public ReactiveCommand<Unit, Unit> AddTransactionCommand { get; }
     public ReactiveCommand<Transaction, Unit> EditTransactionCommand { get; }
-    public ReactiveCommand<Transaction, Unit> DeleteTransactionCommand { get; }
+    public ICommand DeleteTransactionCommand { get; }
     public ReactiveCommand<Unit, Unit> CloseEditPanelCommand { get; }
+
+    // Método de inicialización
+    public async Task Initialize()
+    {
+        await LoadTransactions();
+    }
 
     private async Task LoadTransactions()
     {
-        IsBusy = true;
-        try
+        // Usar el método ExecuteSafelyAsync del ViewModelBase
+        await ExecuteSafelyAsync(async () =>
         {
             // Ejecutar la consulta en background thread
             var transactions = await Task.Run(async () => 
                 await _transactionService.GetAllTransactionsAsync());
 
-            // Actualizar UI en UI thread
-            UIThreadHelper.InvokeOnUIThread(() =>
-            {
-                Transactions.Clear();
-                foreach (var transaction in transactions)
-                {
-                    Transactions.Add(transaction);
-                }
-                ApplyFilters();
-            });
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Error loading transactions");
-        }
-        finally
-        {
-            // IsBusy debe actualizarse en UI thread
-            UIThreadHelper.InvokeOnUIThread(() =>
-            {
-                IsBusy = false;
-            });
-        }
+            // Actualizar colecciones de forma segura
+            Transactions.ReplaceAll(transactions);
+            ApplyFilters();
+        }, "LoadTransactions");
     }
 
     private void AddTransaction()
     {
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        try
         {
-            AddEditViewModel.StartAdd();
-            IsEditPanelVisible = true;
-        });
+            if (Dispatcher.UIThread.CheckAccess())
+            {
+                AddEditViewModel.StartAdd();
+                IsEditPanelVisible = true;
+            }
+            else
+            {
+                Dispatcher.UIThread.Invoke(() =>
+                {
+                    AddEditViewModel.StartAdd();
+                    IsEditPanelVisible = true;
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "AddTransaction");
+        }
     }
 
     private void EditTransaction(Transaction transaction)
     {
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-        {
-            AddEditViewModel.StartEdit(transaction);
-            IsEditPanelVisible = true;
-        });
-    }
-
-    private async Task DeleteTransaction(Transaction transaction)
-    {
-        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => IsBusy = true);
         try
         {
-            await _transactionService.DeleteTransactionAsync(transaction.Id!.Value);
-            await LoadTransactions();
+            if (Dispatcher.UIThread.CheckAccess())
+            {
+                AddEditViewModel.StartEdit(transaction);
+                IsEditPanelVisible = true;
+            }
+            else
+            {
+                Dispatcher.UIThread.Invoke(() =>
+                {
+                    AddEditViewModel.StartEdit(transaction);
+                    IsEditPanelVisible = true;
+                });
+            }
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Error deleting transaction");
+            HandleException(ex, "EditTransaction");
         }
-        finally
+    }
+
+    private async Task DeleteTransaction(Transaction? transaction)
+    {
+        if (transaction?.Id == null) return;
+
+        await ExecuteSafelyAsync(async () =>
         {
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => IsBusy = false);
-        }
+            await _transactionService.DeleteTransactionAsync(transaction.Id.Value);
+            await LoadTransactions();
+        }, "DeleteTransaction");
     }
 
     private void CloseEditPanel()
     {
-        IsEditPanelVisible = false;
-        SelectedTransaction = null;
+        UIThreadHelper.InvokeOnUIThread(() =>
+        {
+            IsEditPanelVisible = false;
+            SelectedTransaction = null;
+        });
     }
 
     private async void OnTransactionSaved()
@@ -158,35 +199,46 @@ public class TransactionsViewModel : ViewModelBase
 
     private void ApplyFilters()
     {
-        FilteredTransactions.Clear();
-
-        var filtered = Transactions.AsEnumerable();
-
-        // Filtro de texto
-        if (!string.IsNullOrWhiteSpace(SearchText))
+        UIThreadHelper.InvokeOnUIThread(() =>
         {
-            filtered = filtered.Where(t =>
-                t.Description.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                (t.Subcategory?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (t.Notes?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
-        }
+            try
+            {
+                // Crear una lista temporal para evitar múltiples notificaciones
+                var filteredList = new List<Transaction>();
+                var filtered = Transactions.AsEnumerable();
 
-        // Filtro de categoría
-        if (FilterCategory.HasValue)
-        {
-            filtered = filtered.Where(t => t.Category == FilterCategory.Value);
-        }
+                // Filtro de texto
+                if (!string.IsNullOrWhiteSpace(SearchText))
+                {
+                    filtered = filtered.Where(t =>
+                        t.Description.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                        (t.Subcategory?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        (t.Notes?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
+                }
 
-        // Filtro de tipo
-        if (FilterType.HasValue)
-        {
-            filtered = filtered.Where(t => t.Type == FilterType.Value);
-        }
+                // Filtro de categoría
+                if (FilterCategory.HasValue)
+                {
+                    filtered = filtered.Where(t => t.Category == FilterCategory.Value);
+                }
 
-        foreach (var transaction in filtered.OrderByDescending(t => t.Date))
-        {
-            FilteredTransactions.Add(transaction);
-        }
+                // Filtro de tipo
+                if (FilterType.HasValue)
+                {
+                    filtered = filtered.Where(t => t.Type == FilterType.Value);
+                }
+
+                // Ordenar y añadir a la lista temporal
+                filteredList.AddRange(filtered.OrderByDescending(t => t.Date));
+
+                // Actualizar la colección filtrada de una sola vez
+                FilteredTransactions.ReplaceAll(filteredList);
+            }
+            catch (Exception ex)
+            {
+                HandleException(ex, "ApplyFilters");
+            }
+        });
     }
 }
 

@@ -1,19 +1,27 @@
 using System;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Avalonia.Threading;
+using KakeboApp.Utils;
+using Serilog;
 
 namespace KakeboApp.Commands;
 
+/// <summary>
+/// Comando asíncrono mejorado con manejo de excepciones y sincronización de hilos
+/// </summary>
 public class AsyncCommand : ICommand
 {
     private readonly Func<Task> _execute;
     private readonly Func<bool>? _canExecute;
     private bool _isExecuting;
+    private readonly Action<Exception>? _onError;
 
-    public AsyncCommand(Func<Task> execute, Func<bool>? canExecute = null)
+    public AsyncCommand(Func<Task> execute, Func<bool>? canExecute = null, Action<Exception>? onError = null)
     {
-        _execute = execute;
+        _execute = execute ?? throw new ArgumentNullException(nameof(execute));
         _canExecute = canExecute;
+        _onError = onError;
     }
 
     public event EventHandler? CanExecuteChanged;
@@ -33,7 +41,24 @@ public class AsyncCommand : ICommand
 
         try
         {
-            await _execute();
+            // Aseguramos que la operación larga no bloquee la UI
+            await Task.Run(async () => {
+                try
+                {
+                    await _execute();
+                }
+                catch (Exception ex)
+                {
+                    // Loguear la excepción
+                    Log.Error(ex, "Error executing command");
+                    
+                    // Notificar la excepción si hay un handler
+                    if (_onError != null)
+                    {
+                        UIThreadHelper.InvokeOnUIThread(() => _onError(ex));
+                    }
+                }
+            });
         }
         finally
         {
@@ -44,27 +69,27 @@ public class AsyncCommand : ICommand
 
     public void RaiseCanExecuteChanged()
     {
-        if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
-        {
+        UIThreadHelper.InvokeOnUIThread(() => {
             CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-        }
-        else
-        {
-            Avalonia.Threading.Dispatcher.UIThread.Post(() => CanExecuteChanged?.Invoke(this, EventArgs.Empty));
-        }
+        });
     }
 }
 
+/// <summary>
+/// Comando asíncrono genérico mejorado con manejo de excepciones y sincronización de hilos
+/// </summary>
 public class AsyncCommand<T> : ICommand
 {
     private readonly Func<T?, Task> _execute;
     private readonly Func<T?, bool>? _canExecute;
     private bool _isExecuting;
+    private readonly Action<Exception>? _onError;
 
-    public AsyncCommand(Func<T?, Task> execute, Func<T?, bool>? canExecute = null)
+    public AsyncCommand(Func<T?, Task> execute, Func<T?, bool>? canExecute = null, Action<Exception>? onError = null)
     {
-        _execute = execute;
+        _execute = execute ?? throw new ArgumentNullException(nameof(execute));
         _canExecute = canExecute;
+        _onError = onError;
     }
 
     public event EventHandler? CanExecuteChanged;
@@ -84,7 +109,24 @@ public class AsyncCommand<T> : ICommand
 
         try
         {
-            await _execute((T?)parameter);
+            // Aseguramos que la operación larga no bloquee la UI
+            await Task.Run(async () => {
+                try
+                {
+                    await _execute((T?)parameter);
+                }
+                catch (Exception ex)
+                {
+                    // Loguear la excepción
+                    Log.Error(ex, "Error executing command with parameter");
+                    
+                    // Notificar la excepción si hay un handler
+                    if (_onError != null)
+                    {
+                        UIThreadHelper.InvokeOnUIThread(() => _onError(ex));
+                    }
+                }
+            });
         }
         finally
         {
@@ -95,13 +137,8 @@ public class AsyncCommand<T> : ICommand
 
     public void RaiseCanExecuteChanged()
     {
-        if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
-        {
+        UIThreadHelper.InvokeOnUIThread(() => {
             CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-        }
-        else
-        {
-            Avalonia.Threading.Dispatcher.UIThread.Post(() => CanExecuteChanged?.Invoke(this, EventArgs.Empty));
-        }
+        });
     }
 }

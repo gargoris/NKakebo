@@ -76,13 +76,30 @@
             </DataGrid>
         </Grid>
         
-        <!-- Panel de edición placeholder -->
+        <!-- Panel de edición real -->
+        <Border Grid.Column="1" 
+               Background="White" 
+               Padding="20"
+               IsVisible="{Binding IsEditPanelVisible}">
+            <ContentControl Content="{Binding AddEditViewModel}"/>
+        </Border>
+        
+        <!-- Mensaje cuando no hay panel de edición visible -->
         <Border Grid.Column="1" 
                Background="LightGray" 
-               Padding="20">
-            <TextBlock Text="Panel de edición"
-                      HorizontalAlignment="Center"
-                      VerticalAlignment="Center"/>
+               Padding="20"
+               IsVisible="{Binding !IsEditPanelVisible}">
+            <StackPanel HorizontalAlignment="Center"
+                       VerticalAlignment="Center">
+                <TextBlock Text="Seleccione una transacción para editar"
+                          HorizontalAlignment="Center"
+                          Margin="0,0,0,10"/>
+                <Button Content="Nueva Transacción" 
+                       Command="{Binding AddTransactionCommand}"
+                       Background="#27AE60" 
+                       Foreground="White" 
+                       Padding="15,8"/>
+            </StackPanel>
         </Border>
     </Grid>
 

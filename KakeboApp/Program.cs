@@ -72,16 +72,26 @@ public partial class App : Application
     {
         AvaloniaXamlLoader.Load(this);
 
-        // Configurar el dispatcher de threading para el Core
+        // Configurar el dispatcher de threading para el Core con manejo de errores
         ThreadingHelper.UIThreadDispatcher = action =>
         {
-            if (Dispatcher.UIThread.CheckAccess())
+            try
             {
-                action();
+                if (Dispatcher.UIThread.CheckAccess())
+                {
+                    action();
+                }
+                else
+                {
+                    // Usar Invoke en lugar de Post para garantizar que la acción se ejecuta
+                    // antes de continuar, evitando problemas de sincronización
+                    Dispatcher.UIThread.Invoke(action);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Dispatcher.UIThread.Post(action);
+                Log.Error(ex, "Error executing action on UI thread");
+                throw;
             }
         };
 

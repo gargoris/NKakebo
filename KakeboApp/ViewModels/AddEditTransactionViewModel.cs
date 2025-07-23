@@ -128,8 +128,7 @@ public class AddEditTransactionViewModel : ViewModelBase
 
     private async Task SaveTransaction()
     {
-        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => IsBusy = true);
-        try
+        await ExecuteSafelyAsync(async () =>
         {
             var transaction = new Transaction
             {
@@ -152,16 +151,17 @@ public class AddEditTransactionViewModel : ViewModelBase
                 await _transactionService.AddTransactionAsync(transaction);
             }
 
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => _transactionSaved.OnNext(System.Reactive.Unit.Default));
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Error saving transaction");
-        }
-        finally
-        {
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => IsBusy = false);
-        }
+            // Notificar que la transacción se guardó correctamente
+            if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
+            {
+                _transactionSaved.OnNext(System.Reactive.Unit.Default);
+            }
+            else
+            {
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => 
+                    _transactionSaved.OnNext(System.Reactive.Unit.Default));
+            }
+        }, "SaveTransaction");
     }
 
     private void Cancel()

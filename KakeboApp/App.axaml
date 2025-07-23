@@ -2,11 +2,16 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:converters="clr-namespace:KakeboApp.Converters"
+             xmlns:vm="clr-namespace:KakeboApp.ViewModels"
+             xmlns:views="clr-namespace:KakeboApp.Views"
              x:Class="KakeboApp.App"
              RequestedThemeVariant="Default">
 
     <Application.DataTemplates>
-        <!-- Removed ReactiveUI ViewLocator for now -->
+        <!-- ViewModels to Views mapping -->
+        <DataTemplate DataType="{x:Type vm:AddEditTransactionViewModel}">
+            <views:AddEditTransactionView />
+        </DataTemplate>
     </Application.DataTemplates>
 
     <Application.Styles>
