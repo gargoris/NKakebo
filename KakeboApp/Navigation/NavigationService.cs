@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using KakeboApp.ViewModels;
+using KakeboApp.Utils;
 
 namespace KakeboApp.Navigation;
 
@@ -49,10 +50,10 @@ public class NavigationService : INavigationService
                 _currentPage = value;
                 
                 if (oldPage != null)
-                    NavigatingFrom?.Invoke(oldPage);
+                    UIThreadHelper.InvokeOnUIThread(() => NavigatingFrom?.Invoke(oldPage));
                 
                 if (_currentPage != null)
-                    NavigatedTo?.Invoke(_currentPage);
+                    UIThreadHelper.InvokeOnUIThread(() => NavigatedTo?.Invoke(_currentPage));
             }
         }
     }

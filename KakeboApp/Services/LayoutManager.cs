@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using ReactiveUI;
+using KakeboApp.Utils;
 
 namespace KakeboApp.Services;
 
@@ -82,7 +83,7 @@ public class LayoutManager : ReactiveObject, ILayoutManager
         // Disparar evento si cambió el layout
         if (wasMobile != IsMobileSize || wasNarrow != IsNarrowLayout || wasWide != IsWideLayout)
         {
-            LayoutChanged?.Invoke();
+            UIThreadHelper.InvokeOnUIThread(() => LayoutChanged?.Invoke());
         }
     }
 

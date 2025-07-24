@@ -3,7 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using KakeboApp.Core.Interfaces;
 using KakeboApp.Core.Models;
-using KakeboApp.Core.Utils;
+using KakeboApp.Utils;
 
 namespace KakeboApp.Core.Services;
 
@@ -38,7 +38,7 @@ public class DatabaseService : IDatabaseService
             if (!wasConnected)
             {
                 // Disparar evento en el UI thread para evitar problemas de threading
-                ThreadingHelper.InvokeOnUIThread(() => DatabaseConnected?.Invoke());
+                UIThreadHelper.InvokeOnUIThread(() => DatabaseConnected?.Invoke());
             }
         }
 
@@ -141,7 +141,7 @@ public class DatabaseService : IDatabaseService
             if (wasConnected)
             {
                 // Disparar evento en el UI thread para evitar problemas de threading
-                ThreadingHelper.InvokeOnUIThread(() => DatabaseDisconnected?.Invoke());
+                UIThreadHelper.InvokeOnUIThread(() => DatabaseDisconnected?.Invoke());
             }
             
             return new Result<Unit>.Success(Unit.Value);

@@ -91,10 +91,14 @@ public class DatabaseConnectionViewModel : ViewModelBase
     {
         if (control == null) return;
         
+        IsConnecting = true;
+        ErrorMessage = null;
+        
         try
         {
             var topLevel = TopLevel.GetTopLevel(control);
             if (topLevel == null) return;
+            
             var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
                 Title = "Crear Nueva Base de Datos",
@@ -104,14 +108,35 @@ public class DatabaseConnectionViewModel : ViewModelBase
                     new FilePickerFileType("Base de Datos") { Patterns = new[] { "*.db" } }
                 }
             });
+            
             if (file != null)
             {
                 DatabasePath = file.Path.LocalPath;
+                
+                // Crear la base de datos y conectar automáticamente
+                var result = await _databaseService.CreateDatabaseAsync(DatabasePath, Password);
+                
+                if (result.IsSuccess)
+                {
+                    // Disparar evento en el hilo de UI para evitar errores de threading
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    {
+                        _databaseConnected.OnNext(Unit.Default);
+                    });
+                }
+                else
+                {
+                    ErrorMessage = result.GetError();
+                }
             }
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Error al crear archivo: {ex.Message}";
+            ErrorMessage = $"Error al crear base de datos: {ex.Message}";
+        }
+        finally
+        {
+            IsConnecting = false;
         }
     }
 
