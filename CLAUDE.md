@@ -347,5 +347,61 @@ SaveCommand = ReactiveCommand.CreateFromTask(
 ### Compilation and Runtime Success
 - Fixed ReactiveObject override compilation errors
 - Maintained compatibility with ReactiveUI.Fody `[Reactive]` attributes
-- Eliminated `System.InvalidOperationException: Call from invalid thread` errors
+- ~~Eliminated `System.InvalidOperationException: Call from invalid thread` errors~~ **STILL OCCURRING**
 - Preserved responsive UI while ensuring thread safety
+
+## PENDING THREADING ISSUES (July 2025)
+
+### Current Status: UNRESOLVED
+Despite multiple approaches, the `System.InvalidOperationException: Call from invalid thread` persists when clicking "Nueva transacción" button. The issue appears to be a fundamental conflict between ReactiveUI, Fody property weaving, and Avalonia's threading model.
+
+### Stack Trace Pattern
+```
+at Avalonia.Controls.Button.CanExecuteChanged(Object sender, EventArgs e)
+at ReactiveUI.ReactiveCommandBase`2.OnCanExecuteChanged(Boolean newValue)
+```
+
+The error occurs when ReactiveCommand tries to notify UI controls about CanExecute changes from background threads, even when using proper schedulers.
+
+### Failed Approaches Attempted
+1. ✗ Adding `.ObserveOn(RxApp.MainThreadScheduler)` to canExecute observables
+2. ✗ Wrapping all `IsBusy` property updates in `UIThreadHelper.InvokeOnUIThread()`
+3. ✗ Using `outputScheduler: RxApp.MainThreadScheduler` on all ReactiveCommands
+4. ✗ Overriding `RaisePropertyChanged` in ViewModelBase (compilation errors)
+5. ✗ Intercepting PropertyChanged events for thread marshalling
+6. ✗ Comprehensive UIThreadHelper strategy throughout ViewModels
+
+### Potential Solutions for Tomorrow
+1. **Replace ReactiveCommand with AsyncCommand**: 
+   - Use `AsyncCommand` from existing codebase instead of ReactiveCommand
+   - May avoid ReactiveUI threading complexities entirely
+   - Commands like `AddTransactionCommand`, `SaveCommand` would become `AsyncCommand`
+
+2. **Fody Configuration Review**:
+   - Check `FodyWeavers.xml` configuration
+   - Fody may be generating property notifications that don't respect UI threading
+   - Consider disabling Fody temporarily to isolate the issue
+
+3. **ViewModel Factory Pattern**:
+   - Ensure all ViewModels are created on UI thread
+   - Implement `IViewModelFactory` with UI thread guarantees
+   - May prevent cross-thread property access during initialization
+
+4. **Messaging Pattern for IsBusy**:
+   - Replace direct `IsBusy` property binding with messaging
+   - Use ReactiveUI MessageBus or custom event aggregator
+   - Decouple UI state from ViewModel property notifications
+
+5. **Alternative UI State Management**:
+   - Move loading states to View level instead of ViewModel
+   - Use Avalonia-specific loading indicators
+   - Bypass ReactiveUI property system for critical UI states
+
+### Debug Information Needed
+- Full stack trace with line numbers
+- Thread IDs where property changes occur
+- Fody weaving output analysis
+- ReactiveUI version compatibility with Avalonia 11.3.2
+
+### Priority: HIGH
+This threading issue blocks basic functionality and user experience. Should be addressed as first priority in next development session.
