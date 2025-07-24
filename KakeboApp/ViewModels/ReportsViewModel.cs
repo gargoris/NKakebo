@@ -11,6 +11,7 @@ using KakeboApp.Core.Models;
 using KakeboApp.Core.Services;
 using KakeboApp.ViewModels;
 using KakeboApp.Commands;
+using KakeboApp.Utils;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using Serilog;
@@ -58,7 +59,7 @@ public class ReportsViewModel : ViewModelBase
 
     private async Task LoadData()
     {
-        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => IsBusy = true);
+        IsBusy = true;
         try
         {
             var balanceTask = _transactionService.GetBalanceAsync(CurrentYear, CurrentMonth);
@@ -71,17 +72,14 @@ public class ReportsViewModel : ViewModelBase
             var categories = await categoryTask;
             var subcategories = await subcategoryTask;
 
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                BalanceInfo = balance;
-                ExpensesByCategory.Clear();
-                foreach (var expense in categories)
-                    ExpensesByCategory.Add(expense);
-                ExpensesBySubcategory.Clear();
-                foreach (var expense in subcategories)
-                    ExpensesBySubcategory.Add(expense);
-                UpdateCalculatedProperties();
-            });
+            BalanceInfo = balance;
+            ExpensesByCategory.Clear();
+            foreach (var expense in categories)
+                ExpensesByCategory.Add(expense);
+            ExpensesBySubcategory.Clear();
+            foreach (var expense in subcategories)
+                ExpensesBySubcategory.Add(expense);
+            UpdateCalculatedProperties();
         }
         catch (Exception ex)
         {
@@ -89,7 +87,7 @@ public class ReportsViewModel : ViewModelBase
         }
         finally
         {
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => IsBusy = false);
+            IsBusy = false;
         }
     }
 
@@ -97,44 +95,24 @@ public class ReportsViewModel : ViewModelBase
     {
         var (year, month) = DateHelpers.GetPreviousMonth(CurrentYear, CurrentMonth);
         
-        // Asegurar que los cambios se hagan en el UI thread
-        if (Dispatcher.UIThread.CheckAccess())
+        await UIThreadHelper.InvokeOnUIThreadAsync(async () =>
         {
             CurrentYear = year;
             CurrentMonth = month;
             await LoadData();
-        }
-        else
-        {
-            await Dispatcher.UIThread.InvokeAsync(async () =>
-            {
-                CurrentYear = year;
-                CurrentMonth = month;
-                await LoadData();
-            });
-        }
+        });
     }
 
     private async Task NextMonth()
     {
         var (year, month) = DateHelpers.GetNextMonth(CurrentYear, CurrentMonth);
         
-        // Asegurar que los cambios se hagan en el UI thread
-        if (Dispatcher.UIThread.CheckAccess())
+        await UIThreadHelper.InvokeOnUIThreadAsync(async () =>
         {
             CurrentYear = year;
             CurrentMonth = month;
             await LoadData();
-        }
-        else
-        {
-            await Dispatcher.UIThread.InvokeAsync(async () =>
-            {
-                CurrentYear = year;
-                CurrentMonth = month;
-                await LoadData();
-            });
-        }
+        });
     }
 
     private void ToggleView()

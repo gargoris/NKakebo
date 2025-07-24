@@ -41,24 +41,19 @@ public class AsyncCommand : ICommand
 
         try
         {
-            // Aseguramos que la operación larga no bloquee la UI
-            await Task.Run(async () => {
-                try
-                {
-                    await _execute();
-                }
-                catch (Exception ex)
-                {
-                    // Loguear la excepción
-                    Log.Error(ex, "Error executing command");
-                    
-                    // Notificar la excepción si hay un handler
-                    if (_onError != null)
-                    {
-                        UIThreadHelper.InvokeOnUIThread(() => _onError(ex));
-                    }
-                }
-            });
+            // Ejecutar directamente - no usar Task.Run para evitar problemas con UI
+            await _execute();
+        }
+        catch (Exception ex)
+        {
+            // Loguear la excepción
+            Log.Error(ex, "Error executing command");
+            
+            // Notificar la excepción si hay un handler
+            if (_onError != null)
+            {
+                UIThreadHelper.InvokeOnUIThread(() => _onError(ex));
+            }
         }
         finally
         {
@@ -109,24 +104,19 @@ public class AsyncCommand<T> : ICommand
 
         try
         {
-            // Aseguramos que la operación larga no bloquee la UI
-            await Task.Run(async () => {
-                try
-                {
-                    await _execute((T?)parameter);
-                }
-                catch (Exception ex)
-                {
-                    // Loguear la excepción
-                    Log.Error(ex, "Error executing command with parameter");
-                    
-                    // Notificar la excepción si hay un handler
-                    if (_onError != null)
-                    {
-                        UIThreadHelper.InvokeOnUIThread(() => _onError(ex));
-                    }
-                }
-            });
+            // Ejecutar directamente - no usar Task.Run para evitar problemas con UI
+            await _execute((T?)parameter);
+        }
+        catch (Exception ex)
+        {
+            // Loguear la excepción
+            Log.Error(ex, "Error executing command with parameter");
+            
+            // Notificar la excepción si hay un handler
+            if (_onError != null)
+            {
+                UIThreadHelper.InvokeOnUIThread(() => _onError(ex));
+            }
         }
         finally
         {

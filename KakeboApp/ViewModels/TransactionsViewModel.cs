@@ -105,19 +105,8 @@ public class TransactionsViewModel : ViewModelBase
     {
         try
         {
-            if (Dispatcher.UIThread.CheckAccess())
-            {
-                AddEditViewModel.StartAdd();
-                IsEditPanelVisible = true;
-            }
-            else
-            {
-                Dispatcher.UIThread.Invoke(() =>
-                {
-                    AddEditViewModel.StartAdd();
-                    IsEditPanelVisible = true;
-                });
-            }
+            AddEditViewModel.StartAdd();
+            IsEditPanelVisible = true;
         }
         catch (Exception ex)
         {
@@ -129,19 +118,8 @@ public class TransactionsViewModel : ViewModelBase
     {
         try
         {
-            if (Dispatcher.UIThread.CheckAccess())
-            {
-                AddEditViewModel.StartEdit(transaction);
-                IsEditPanelVisible = true;
-            }
-            else
-            {
-                Dispatcher.UIThread.Invoke(() =>
-                {
-                    AddEditViewModel.StartEdit(transaction);
-                    IsEditPanelVisible = true;
-                });
-            }
+            AddEditViewModel.StartEdit(transaction);
+            IsEditPanelVisible = true;
         }
         catch (Exception ex)
         {
@@ -162,11 +140,8 @@ public class TransactionsViewModel : ViewModelBase
 
     private void CloseEditPanel()
     {
-        UIThreadHelper.InvokeOnUIThread(() =>
-        {
-            IsEditPanelVisible = false;
-            SelectedTransaction = null;
-        });
+        IsEditPanelVisible = false;
+        SelectedTransaction = null;
     }
 
     private async void OnTransactionSaved()

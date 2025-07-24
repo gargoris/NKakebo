@@ -87,20 +87,11 @@ public class MainWindowViewModel : ViewModelBase
     {
         try
         {
-            // Asegurar que los cambios se hagan en el UI thread
-            if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
+            UIThreadHelper.InvokeOnUIThread(() =>
             {
                 IsConnected = true;
                 CurrentPage = TransactionsViewModel;
-            }
-            else
-            {
-                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                {
-                    IsConnected = true;
-                    CurrentPage = TransactionsViewModel;
-                });
-            }
+            });
             
             Log.Information("Database connected successfully, navigated to transactions view");
         }
