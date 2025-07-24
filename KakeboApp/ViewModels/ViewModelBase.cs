@@ -20,20 +20,6 @@ namespace KakeboApp.ViewModels;
 public abstract class ViewModelBase : ReactiveObject
 {
     /// <summary>
-    /// Override para asegurar que todas las notificaciones de propiedades se ejecuten en el UI thread
-    /// </summary>
-    protected override void RaisePropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        if (Dispatcher.UIThread.CheckAccess())
-        {
-            base.RaisePropertyChanged(propertyName);
-        }
-        else
-        {
-            Dispatcher.UIThread.Post(() => base.RaisePropertyChanged(propertyName));
-        }
-    }
-    /// <summary>
     /// Indica si el ViewModel está ocupado procesando una operación
     /// </summary>
     [Reactive] public bool IsBusy { get; set; }
@@ -52,7 +38,9 @@ public abstract class ViewModelBase : ReactiveObject
         
         Log.Error(ex, "Error in {Operation}: {Message}", operation, ex.Message);
         
-        ErrorMessage = $"Error: {ex.Message}";
+        UIThreadHelper.InvokeOnUIThread(() => {
+            ErrorMessage = $"Error: {ex.Message}";
+        });
     }
     
     /// <summary>
@@ -67,8 +55,10 @@ public abstract class ViewModelBase : ReactiveObject
         }
         
         // Limpiar error anterior y establecer estado ocupado
-        ErrorMessage = string.Empty;
-        IsBusy = true;
+        UIThreadHelper.InvokeOnUIThread(() => {
+            ErrorMessage = string.Empty;
+            IsBusy = true;
+        });
         
         try
         {
@@ -81,7 +71,7 @@ public abstract class ViewModelBase : ReactiveObject
         finally
         {
             // Restablecer estado ocupado
-            IsBusy = false;
+            UIThreadHelper.InvokeOnUIThread(() => IsBusy = false);
         }
     }
     
@@ -97,8 +87,10 @@ public abstract class ViewModelBase : ReactiveObject
         }
         
         // Limpiar error anterior y establecer estado ocupado
-        ErrorMessage = string.Empty;
-        IsBusy = true;
+        UIThreadHelper.InvokeOnUIThread(() => {
+            ErrorMessage = string.Empty;
+            IsBusy = true;
+        });
         
         try
         {
@@ -112,7 +104,7 @@ public abstract class ViewModelBase : ReactiveObject
         finally
         {
             // Restablecer estado ocupado
-            IsBusy = false;
+            UIThreadHelper.InvokeOnUIThread(() => IsBusy = false);
         }
     }
 }

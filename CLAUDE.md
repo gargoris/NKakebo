@@ -319,32 +319,33 @@ var canSave = this.WhenAnyValue(x => x.IsBusy, busy => !busy)
 
 ## Final Threading Solution (July 2025)
 
-### Global RaisePropertyChanged Override
-Implemented definitive solution by overriding `RaisePropertyChanged` in `ViewModelBase`:
+### Comprehensive UIThreadHelper Strategy
+After attempting various approaches including ReactiveObject overrides, the most reliable solution is consistent use of `UIThreadHelper.InvokeOnUIThread()` for all UI property updates from background threads.
 
+### Key Implementation Points
+1. **ViewModelBase.ExecuteSafelyAsync**: All `IsBusy` and `ErrorMessage` property updates wrapped in `UIThreadHelper`
+2. **ReportsViewModel.LoadData**: Direct property updates wrapped for thread safety
+3. **ReactiveCommand Configuration**: All commands use `outputScheduler: RxApp.MainThreadScheduler`
+4. **CanExecute Observables**: All validation chains end with `.ObserveOn(RxApp.MainThreadScheduler)`
+
+### Threading Architecture
 ```csharp
-protected override void RaisePropertyChanged([CallerMemberName] string? propertyName = null)
-{
-    if (Dispatcher.UIThread.CheckAccess())
-    {
-        base.RaisePropertyChanged(propertyName);
-    }
-    else
-    {
-        Dispatcher.UIThread.Post(() => base.RaisePropertyChanged(propertyName));
-    }
-}
+// Property updates from background threads
+UIThreadHelper.InvokeOnUIThread(() => {
+    IsBusy = true;
+    ErrorMessage = string.Empty;
+});
+
+// ReactiveCommand with proper scheduler
+SaveCommand = ReactiveCommand.CreateFromTask(
+    SaveTransaction, 
+    canSave.ObserveOn(RxApp.MainThreadScheduler), 
+    RxApp.MainThreadScheduler
+);
 ```
 
-### Benefits of Global Solution
-1. **Automatic Thread Safety**: All `[Reactive]` property notifications automatically marshalled to UI thread
-2. **Simplified Code**: No need for manual `UIThreadHelper` calls for simple property updates
-3. **ReactiveUI Compatibility**: Works seamlessly with Fody-generated property notifications
-4. **Consistent Behavior**: Eliminates threading exceptions across all ViewModels
-5. **Performance Optimized**: Only marshals when necessary (not already on UI thread)
-
-### Code Simplifications Enabled
-- Removed `UIThreadHelper` calls from `ViewModelBase.ExecuteSafelyAsync`
-- Simplified property updates in `ReportsViewModel` and other ViewModels
-- All `[Reactive]` properties now thread-safe by default
-- Maintained explicit `UIThreadHelper` only for collection operations and complex UI updates
+### Compilation and Runtime Success
+- Fixed ReactiveObject override compilation errors
+- Maintained compatibility with ReactiveUI.Fody `[Reactive]` attributes
+- Eliminated `System.InvalidOperationException: Call from invalid thread` errors
+- Preserved responsive UI while ensuring thread safety

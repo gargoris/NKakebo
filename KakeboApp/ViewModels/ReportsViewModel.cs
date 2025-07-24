@@ -59,7 +59,7 @@ public class ReportsViewModel : ViewModelBase
 
     private async Task LoadData()
     {
-        IsBusy = true;
+        UIThreadHelper.InvokeOnUIThread(() => IsBusy = true);
         try
         {
             var balanceTask = _transactionService.GetBalanceAsync(CurrentYear, CurrentMonth);
@@ -90,7 +90,7 @@ public class ReportsViewModel : ViewModelBase
         }
         finally
         {
-            IsBusy = false;
+            UIThreadHelper.InvokeOnUIThread(() => IsBusy = false);
         }
     }
 
