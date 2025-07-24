@@ -53,7 +53,7 @@ public partial class BudgetViewModel : ViewModelBase
             RxApp.MainThreadScheduler
         );
 
-        RefreshDataCommand = ReactiveCommand.CreateFromTask(LoadDataInternal);
+        RefreshDataCommand = ReactiveCommand.CreateFromTask(LoadDataInternal, outputScheduler: RxApp.MainThreadScheduler);
 
         // Configurar observables para actualizar propiedades calculadas cuando cambien las propiedades base
         this.WhenAnyValue(

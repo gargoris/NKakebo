@@ -30,12 +30,13 @@ public class AddEditTransactionViewModel : ViewModelBase
 
         SuggestedSubcategories = new ObservableCollection<string>();
 
-        // Comandos con validación
+        // Comandos con validación - asegurar que canSave se observe en UI thread
         var canSave = this.WhenAnyValue(
             x => x.Description,
             x => x.Amount,
             x => x.IsBusy,
-            (desc, amount, busy) => !string.IsNullOrWhiteSpace(desc) && amount > 0 && !busy);
+            (desc, amount, busy) => !string.IsNullOrWhiteSpace(desc) && amount > 0 && !busy)
+            .ObserveOn(RxApp.MainThreadScheduler);
 
         SaveCommand = ReactiveCommand.CreateFromTask(SaveTransaction, canSave, RxApp.MainThreadScheduler);
         CancelCommand = ReactiveCommand.Create(Cancel, outputScheduler: RxApp.MainThreadScheduler);
@@ -54,7 +55,7 @@ public class AddEditTransactionViewModel : ViewModelBase
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(OnTypeChanged);
 
-        // Inicializar sugerencias
+        // Inicializar sugerencias de forma segura
         UpdateSuggestedSubcategories(Category.Food);
     }
 
@@ -125,8 +126,9 @@ public class AddEditTransactionViewModel : ViewModelBase
 
     private async Task SaveTransaction()
     {
-        await ExecuteSafelyAsync(async () =>
+        try
         {
+            // Crear la transacción con los valores actuales
             var transaction = new Transaction
             {
                 Id = _originalTransaction?.Id,
@@ -139,6 +141,7 @@ public class AddEditTransactionViewModel : ViewModelBase
                 Notes = string.IsNullOrWhiteSpace(Notes) ? null : Notes
             };
 
+            // Realizar la operación de base de datos
             if (IsEditing)
             {
                 await _transactionService.UpdateTransactionAsync(transaction);
@@ -149,15 +152,17 @@ public class AddEditTransactionViewModel : ViewModelBase
             }
 
             // Notificar que la transacción se guardó correctamente
-            UIThreadHelper.InvokeOnUIThread(() => 
-                _transactionSaved.OnNext(System.Reactive.Unit.Default));
-        }, "SaveTransaction");
+            _transactionSaved.OnNext(System.Reactive.Unit.Default);
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "SaveTransaction");
+        }
     }
 
     private void Cancel()
     {
-        UIThreadHelper.InvokeOnUIThread(() => 
-            _cancelled.OnNext(System.Reactive.Unit.Default));
+        _cancelled.OnNext(System.Reactive.Unit.Default);
     }
 
     private void SelectSubcategory(string subcategory)
@@ -172,23 +177,29 @@ public class AddEditTransactionViewModel : ViewModelBase
 
     private void UpdateSuggestedSubcategories(Category category)
     {
-        SuggestedSubcategories.Clear();
-        var suggestions = CategoryUtils.GetCommonSubcategories(category);
-        foreach (var suggestion in suggestions)
+        UIThreadHelper.InvokeOnUIThread(() =>
         {
-            SuggestedSubcategories.Add(suggestion);
-        }
+            SuggestedSubcategories.Clear();
+            var suggestions = CategoryUtils.GetCommonSubcategories(category);
+            foreach (var suggestion in suggestions)
+            {
+                SuggestedSubcategories.Add(suggestion);
+            }
+        });
     }
 
     private void OnTypeChanged(TransactionType type)
     {
-        // Cambiar a una categoría válida si la actual no es válida
-        if (!CategoryUtils.IsValidCategoryForType(Category, type))
+        UIThreadHelper.InvokeOnUIThread(() =>
         {
-            Category = CategoryUtils.GetDefaultCategoryForType(type);
-        }
+            // Cambiar a una categoría válida si la actual no es válida
+            if (!CategoryUtils.IsValidCategoryForType(Category, type))
+            {
+                Category = CategoryUtils.GetDefaultCategoryForType(type);
+            }
 
-        // Forzar notificación de ValidCategories ya que es una computed property
-        this.RaisePropertyChanged(nameof(ValidCategories));
+            // Forzar notificación de ValidCategories ya que es una computed property
+            this.RaisePropertyChanged(nameof(ValidCategories));
+        });
     }
 }

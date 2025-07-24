@@ -103,28 +103,34 @@ public class TransactionsViewModel : ViewModelBase
 
     private void AddTransaction()
     {
-        try
+        UIThreadHelper.InvokeOnUIThread(() =>
         {
-            AddEditViewModel.StartAdd();
-            IsEditPanelVisible = true;
-        }
-        catch (Exception ex)
-        {
-            HandleException(ex, "AddTransaction");
-        }
+            try
+            {
+                AddEditViewModel.StartAdd();
+                IsEditPanelVisible = true;
+            }
+            catch (Exception ex)
+            {
+                HandleException(ex, "AddTransaction");
+            }
+        });
     }
 
     private void EditTransaction(Transaction transaction)
     {
-        try
+        UIThreadHelper.InvokeOnUIThread(() =>
         {
-            AddEditViewModel.StartEdit(transaction);
-            IsEditPanelVisible = true;
-        }
-        catch (Exception ex)
-        {
-            HandleException(ex, "EditTransaction");
-        }
+            try
+            {
+                AddEditViewModel.StartEdit(transaction);
+                IsEditPanelVisible = true;
+            }
+            catch (Exception ex)
+            {
+                HandleException(ex, "EditTransaction");
+            }
+        });
     }
 
     private async Task DeleteTransaction(Transaction? transaction)
@@ -140,8 +146,11 @@ public class TransactionsViewModel : ViewModelBase
 
     private void CloseEditPanel()
     {
-        IsEditPanelVisible = false;
-        SelectedTransaction = null;
+        UIThreadHelper.InvokeOnUIThread(() =>
+        {
+            IsEditPanelVisible = false;
+            SelectedTransaction = null;
+        });
     }
 
     private async void OnTransactionSaved()

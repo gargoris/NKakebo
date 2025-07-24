@@ -81,7 +81,7 @@ public class MainView : UserControl
                     Content = "Reintentar",
                     Margin = new Avalonia.Thickness(20),
                     HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                    Command = ReactiveUI.ReactiveCommand.Create(() => InitializeView())
+                    Command = ReactiveUI.ReactiveCommand.Create(() => InitializeView(), outputScheduler: ReactiveUI.RxApp.MainThreadScheduler)
                 }
             }
         };

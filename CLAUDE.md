@@ -197,6 +197,35 @@ export AVALONIA_RENDERER=skia
 - Runtime identifiers: `win-x64`, `linux-x64`, `osx-x64`, `win-arm64`, `linux-arm64`, `osx-arm64`
 - Fody weaving configured via `FodyWeavers.xml` for ReactiveUI property generation
 
+### Current Dependencies (as of July 2025)
+**Avalonia UI Stack:**
+- Avalonia 11.3.2 - Core UI framework
+- Avalonia.Controls.DataGrid 11.3.2 - DataGrid control
+- Avalonia.Desktop 11.3.2 - Desktop platform support
+- Avalonia.Themes.Fluent 11.3.2 - Fluent design theme
+- Avalonia.Fonts.Inter 11.3.2 - Inter font family
+- Avalonia.ReactiveUI 11.3.2 - ReactiveUI integration
+
+**ReactiveUI Stack:**
+- ReactiveUI 20.4.1 - Core reactive MVVM framework
+- ReactiveUI.Fody 19.5.41 - Automatic property notification
+
+**Data & Persistence:**
+- LiteDB 5.0.21 - Embedded NoSQL database
+
+**Hosting & DI:**
+- Microsoft.Extensions.Hosting 9.0.0 - Generic host
+- Microsoft.Extensions.DependencyInjection 9.0.0 - Dependency injection
+
+**Logging:**
+- Serilog 4.3.0 - Structured logging framework
+- Serilog.Extensions.Hosting 9.0.0 - Host integration
+- Serilog.Extensions.Logging 9.0.2 - Microsoft.Extensions.Logging bridge
+- Serilog.Sinks.Console 6.0.0 - Console output
+
+**Code Generation:**
+- Fody 6.8.1 - IL weaving framework for compile-time enhancements
+
 ## Recent Architectural Improvements (July 2025)
 
 ### Reactive UI Enhancements
@@ -236,3 +265,86 @@ export AVALONIA_RENDERER=skia
   - Thread-safe event notification using `Dispatcher.UIThread.Post()`
 - **DatabaseService**: Updated to use `UIThreadHelper` instead of obsolete `ThreadingHelper`
   - All database events now use proper UI thread marshalling
+
+### Project Structure Updates
+- **Serilog Integration**: Added comprehensive structured logging with multiple sinks
+- **Microsoft Extensions**: Integrated hosting and dependency injection patterns
+- **Platform Detection**: Enhanced platform-specific compilation with conditional constants (WINDOWS, LINUX, MACOS)
+- **Obsolete Code Cleanup**: Removed deprecated `ThreadingHelper` in favor of `UIThreadHelper`
+
+### Latest Improvements Summary
+1. **Enhanced ReactiveUI Integration**: Full Fody weaving with `[Reactive]` attributes
+2. **Improved Thread Safety**: Centralized UI thread management with `UIThreadHelper`
+3. **Better Error Handling**: Consistent `Result<T>` pattern across all layers
+4. **Modern .NET 9.0**: Latest framework features and performance improvements
+5. **Comprehensive Logging**: Structured logging with Serilog across all components
+
+## Critical Threading Fixes (July 2025)
+
+### ReactiveCommand Threading Issues
+Fixed critical threading exceptions in transaction creation workflow:
+
+- **Problem**: `ReactiveCommand.CanExecute` notifications were being triggered from background threads, causing `System.InvalidOperationException: Call from invalid thread` errors
+- **Root Cause**: `ViewModelBase.ExecuteSafelyAsync` was changing `IsBusy` property from background threads, which triggered reactive validation chains that attempted to access UI controls from non-UI threads
+- **Solution**: Added `.ObserveOn(RxApp.MainThreadScheduler)` to all reactive property validation chains in ViewModels
+
+### Key Threading Architecture Changes
+
+#### 1. Observable Chain Threading
+```csharp
+// BEFORE (causing threading issues)
+var canSave = this.WhenAnyValue(x => x.IsBusy, busy => !busy);
+
+// AFTER (thread-safe)
+var canSave = this.WhenAnyValue(x => x.IsBusy, busy => !busy)
+    .ObserveOn(RxApp.MainThreadScheduler);
+```
+
+#### 2. Command Execution Patterns
+- **TransactionsViewModel**: UI operations wrapped in `UIThreadHelper.InvokeOnUIThread()`
+- **AddEditTransactionViewModel**: Simplified async operations to avoid nested threading calls
+- All `ReactiveCommand` instances now use proper schedulers for both execution and validation
+
+#### 3. Property Update Patterns
+- `[Reactive]` properties can be safely updated from any thread (Fody handles marshalling)
+- Observable chains that feed into UI commands must use `RxApp.MainThreadScheduler`
+- Collection modifications always wrapped in `UIThreadHelper.InvokeOnUIThread()`
+
+### Threading Best Practices Established
+1. **ReactiveCommand Creation**: Always specify `outputScheduler: RxApp.MainThreadScheduler`
+2. **CanExecute Observables**: Always end with `.ObserveOn(RxApp.MainThreadScheduler)`
+3. **Collection Updates**: Always use `UIThreadHelper.InvokeOnUIThread()` for ObservableCollection modifications
+4. **UI Property Updates**: Simple property sets can rely on `[Reactive]` attributes, complex operations need thread marshalling
+5. **Subject Notifications**: Can be called from any thread if subscribers use proper schedulers
+
+## Final Threading Solution (July 2025)
+
+### Global RaisePropertyChanged Override
+Implemented definitive solution by overriding `RaisePropertyChanged` in `ViewModelBase`:
+
+```csharp
+protected override void RaisePropertyChanged([CallerMemberName] string? propertyName = null)
+{
+    if (Dispatcher.UIThread.CheckAccess())
+    {
+        base.RaisePropertyChanged(propertyName);
+    }
+    else
+    {
+        Dispatcher.UIThread.Post(() => base.RaisePropertyChanged(propertyName));
+    }
+}
+```
+
+### Benefits of Global Solution
+1. **Automatic Thread Safety**: All `[Reactive]` property notifications automatically marshalled to UI thread
+2. **Simplified Code**: No need for manual `UIThreadHelper` calls for simple property updates
+3. **ReactiveUI Compatibility**: Works seamlessly with Fody-generated property notifications
+4. **Consistent Behavior**: Eliminates threading exceptions across all ViewModels
+5. **Performance Optimized**: Only marshals when necessary (not already on UI thread)
+
+### Code Simplifications Enabled
+- Removed `UIThreadHelper` calls from `ViewModelBase.ExecuteSafelyAsync`
+- Simplified property updates in `ReportsViewModel` and other ViewModels
+- All `[Reactive]` properties now thread-safe by default
+- Maintained explicit `UIThreadHelper` only for collection operations and complex UI updates

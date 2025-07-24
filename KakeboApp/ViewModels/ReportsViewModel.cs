@@ -72,14 +72,17 @@ public class ReportsViewModel : ViewModelBase
             var categories = await categoryTask;
             var subcategories = await subcategoryTask;
 
-            BalanceInfo = balance;
-            ExpensesByCategory.Clear();
-            foreach (var expense in categories)
-                ExpensesByCategory.Add(expense);
-            ExpensesBySubcategory.Clear();
-            foreach (var expense in subcategories)
-                ExpensesBySubcategory.Add(expense);
-            UpdateCalculatedProperties();
+            UIThreadHelper.InvokeOnUIThread(() =>
+            {
+                BalanceInfo = balance;
+                ExpensesByCategory.Clear();
+                foreach (var expense in categories)
+                    ExpensesByCategory.Add(expense);
+                ExpensesBySubcategory.Clear();
+                foreach (var expense in subcategories)
+                    ExpensesBySubcategory.Add(expense);
+                UpdateCalculatedProperties();
+            });
         }
         catch (Exception ex)
         {
