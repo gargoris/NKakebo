@@ -1,5 +1,4 @@
 using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
 using System;
 using System.Reactive;
 using System.Reactive.Subjects;
@@ -19,15 +18,26 @@ namespace KakeboApp.ViewModels;
 /// </summary>
 public abstract class ViewModelBase : ReactiveObject
 {
+    private bool _isBusy;
+    private string _errorMessage = string.Empty;
+    
     /// <summary>
     /// Indica si el ViewModel está ocupado procesando una operación
     /// </summary>
-    [Reactive] public bool IsBusy { get; set; }
+    public bool IsBusy 
+    { 
+        get => _isBusy; 
+        set => this.RaiseAndSetIfChanged(ref _isBusy, value); 
+    }
     
     /// <summary>
     /// Mensaje de error actual
     /// </summary>
-    [Reactive] public string ErrorMessage { get; set; } = string.Empty;
+    public string ErrorMessage 
+    { 
+        get => _errorMessage; 
+        set => this.RaiseAndSetIfChanged(ref _errorMessage, value); 
+    }
     
     /// <summary>
     /// Método para manejar excepciones de manera consistente

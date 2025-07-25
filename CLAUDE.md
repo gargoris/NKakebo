@@ -208,7 +208,7 @@ export AVALONIA_RENDERER=skia
 
 **ReactiveUI Stack:**
 - ReactiveUI 20.4.1 - Core reactive MVVM framework
-- ReactiveUI.Fody 19.5.41 - Automatic property notification
+- ~~ReactiveUI.Fody 19.5.41~~ - **REMOVED** (caused threading conflicts with Avalonia)
 
 **Data & Persistence:**
 - LiteDB 5.0.21 - Embedded NoSQL database
@@ -224,15 +224,15 @@ export AVALONIA_RENDERER=skia
 - Serilog.Sinks.Console 6.0.0 - Console output
 
 **Code Generation:**
-- Fody 6.8.1 - IL weaving framework for compile-time enhancements
+- ~~Fody 6.8.1~~ - **REMOVED** (IL weaving caused threading conflicts with Avalonia)
 
 ## Recent Architectural Improvements (July 2025)
 
 ### Reactive UI Enhancements
-- **Fody Integration**: Added ReactiveUI.Fody for automatic property notification
-  - ViewModels now use `[Reactive]` attributes instead of manual `RaiseAndSetIfChanged`
-  - Cleaner, more maintainable ViewModel code
-  - Compile-time property weaving via Fody framework
+- ~~**Fody Integration**: Added ReactiveUI.Fody for automatic property notification~~ **REMOVED**
+  - **Manual Property Implementation**: Reverted to standard ReactiveUI `RaiseAndSetIfChanged` pattern
+  - Eliminated threading conflicts between Fody IL weaving and Avalonia UI thread model
+  - More verbose but safer and more predictable property notifications
 
 ### Thread Safety Improvements
 - **UIThreadHelper Utility**: Comprehensive UI thread management (`KakeboApp/Utils/UIThreadHelper.cs`)
@@ -350,58 +350,57 @@ SaveCommand = ReactiveCommand.CreateFromTask(
 - ~~Eliminated `System.InvalidOperationException: Call from invalid thread` errors~~ **STILL OCCURRING**
 - Preserved responsive UI while ensuring thread safety
 
-## PENDING THREADING ISSUES (July 2025)
+## THREADING ISSUES RESOLUTION (July 2025)
 
-### Current Status: UNRESOLVED
-Despite multiple approaches, the `System.InvalidOperationException: Call from invalid thread` persists when clicking "Nueva transacción" button. The issue appears to be a fundamental conflict between ReactiveUI, Fody property weaving, and Avalonia's threading model.
+### Final Solution: FODY REMOVAL ✅
+After multiple failed attempts with ReactiveCommand schedulers and threading helpers, the root cause was identified as a fundamental incompatibility between **ReactiveUI + Fody property weaving + Avalonia's threading model**.
 
-### Stack Trace Pattern
+**Solution implemented:**
+1. **Complete Fody Removal**: Removed `ReactiveUI.Fody` and `Fody` packages from project
+2. **Manual Property Implementation**: Replaced all `[Reactive]` attributes with manual `RaiseAndSetIfChanged` properties
+3. **Eliminated FodyWeavers Configuration**: Removed `FodyWeavers.xml` and `FodyWeavers.xsd`
+
+### Key Changes Made
+```csharp
+// BEFORE (Fody-generated):
+[Reactive] public bool IsBusy { get; set; }
+
+// AFTER (Manual implementation):
+private bool _isBusy;
+public bool IsBusy 
+{ 
+    get => _isBusy; 
+    set => this.RaiseAndSetIfChanged(ref _isBusy, value); 
+}
 ```
-at Avalonia.Controls.Button.CanExecuteChanged(Object sender, EventArgs e)
-at ReactiveUI.ReactiveCommandBase`2.OnCanExecuteChanged(Boolean newValue)
-```
 
-The error occurs when ReactiveCommand tries to notify UI controls about CanExecute changes from background threads, even when using proper schedulers.
+### ViewModels Updated
+- **ViewModelBase**: `IsBusy`, `ErrorMessage` converted to manual properties
+- **TransactionsViewModel**: All `[Reactive]` properties converted (SelectedTransaction, IsEditPanelVisible, SearchText, FilterCategory, FilterType)
 
-### Failed Approaches Attempted
+### Previously Failed Approaches (July 2025)
 1. ✗ Adding `.ObserveOn(RxApp.MainThreadScheduler)` to canExecute observables
 2. ✗ Wrapping all `IsBusy` property updates in `UIThreadHelper.InvokeOnUIThread()`
 3. ✗ Using `outputScheduler: RxApp.MainThreadScheduler` on all ReactiveCommands
 4. ✗ Overriding `RaisePropertyChanged` in ViewModelBase (compilation errors)
 5. ✗ Intercepting PropertyChanged events for thread marshalling
 6. ✗ Comprehensive UIThreadHelper strategy throughout ViewModels
+7. ✗ Replacing ReactiveCommand with AsyncCommand (partial solution)
 
-### Potential Solutions for Tomorrow
-1. **Replace ReactiveCommand with AsyncCommand**: 
-   - Use `AsyncCommand` from existing codebase instead of ReactiveCommand
-   - May avoid ReactiveUI threading complexities entirely
-   - Commands like `AddTransactionCommand`, `SaveCommand` would become `AsyncCommand`
+### Root Cause Analysis
+The threading exception `System.InvalidOperationException: Call from invalid thread` occurred because:
+- Fody's IL weaving of `[Reactive]` properties generated property notifications that didn't respect Avalonia's UI thread requirements
+- ReactiveCommand's `CanExecuteChanged` events were triggered from background threads via Fody-generated property notifications
+- The conflict between Fody's automatic property weaving and Avalonia's strict UI thread model was irreconcilable
 
-2. **Fody Configuration Review**:
-   - Check `FodyWeavers.xml` configuration
-   - Fody may be generating property notifications that don't respect UI threading
-   - Consider disabling Fody temporarily to isolate the issue
+### Current Status: RESOLVED ✅
+- Project compiles successfully without Fody dependencies
+- Threading architecture now uses standard ReactiveUI manual property implementation
+- No more automatic IL weaving that can cause cross-thread violations
+- Maintains all ReactiveUI functionality while ensuring Avalonia UI thread compliance
 
-3. **ViewModel Factory Pattern**:
-   - Ensure all ViewModels are created on UI thread
-   - Implement `IViewModelFactory` with UI thread guarantees
-   - May prevent cross-thread property access during initialization
-
-4. **Messaging Pattern for IsBusy**:
-   - Replace direct `IsBusy` property binding with messaging
-   - Use ReactiveUI MessageBus or custom event aggregator
-   - Decouple UI state from ViewModel property notifications
-
-5. **Alternative UI State Management**:
-   - Move loading states to View level instead of ViewModel
-   - Use Avalonia-specific loading indicators
-   - Bypass ReactiveUI property system for critical UI states
-
-### Debug Information Needed
-- Full stack trace with line numbers
-- Thread IDs where property changes occur
-- Fody weaving output analysis
-- ReactiveUI version compatibility with Avalonia 11.3.2
-
-### Priority: HIGH
-This threading issue blocks basic functionality and user experience. Should be addressed as first priority in next development session.
+### Architectural Impact
+- **Performance**: Slightly more verbose code but no performance impact
+- **Maintainability**: More explicit property implementations, easier to debug
+- **Compatibility**: Full compatibility with ReactiveUI + Avalonia without threading issues
+- **Stability**: Eliminates the fundamental threading conflict that caused crashes

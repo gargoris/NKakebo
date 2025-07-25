@@ -6,6 +6,8 @@ using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
+using System.Windows.Input;
+using KakeboApp.Commands;
 using KakeboApp.Core.Interfaces;
 using KakeboApp.Core.Models;
 using KakeboApp.Core.Utils;
@@ -30,20 +32,13 @@ public class AddEditTransactionViewModel : ViewModelBase
 
         SuggestedSubcategories = new ObservableCollection<string>();
 
-        // Comandos con validación - asegurar que canSave se observe en UI thread
-        var canSave = this.WhenAnyValue(
-            x => x.Description,
-            x => x.Amount,
-            x => x.IsBusy,
-            (desc, amount, busy) => !string.IsNullOrWhiteSpace(desc) && amount > 0 && !busy)
-            .ObserveOn(RxApp.MainThreadScheduler);
-
-        SaveCommand = ReactiveCommand.CreateFromTask(SaveTransaction, canSave, RxApp.MainThreadScheduler);
-        CancelCommand = ReactiveCommand.Create(Cancel, outputScheduler: RxApp.MainThreadScheduler);
+        // Comandos usando AsyncCommand para evitar problemas de threading
+        SaveCommand = new AsyncCommand(SaveTransaction, () => CanSave(), ex => HandleException(ex, "Error al guardar transacción"));
+        CancelCommand = new AsyncCommand(CancelAsync, null, ex => HandleException(ex, "Error al cancelar"));
 
         // Comandos de subcategoría
-        SelectSubcategoryCommand = ReactiveCommand.Create<string>(SelectSubcategory, outputScheduler: RxApp.MainThreadScheduler);
-        ClearSubcategoryCommand = ReactiveCommand.Create(ClearSubcategory, outputScheduler: RxApp.MainThreadScheduler);
+        SelectSubcategoryCommand = new AsyncCommand<string>(SelectSubcategoryAsync, null, ex => HandleException(ex, "Error al seleccionar subcategoría"));
+        ClearSubcategoryCommand = new AsyncCommand(ClearSubcategoryAsync, null, ex => HandleException(ex, "Error al limpiar subcategoría"));
 
         // Actualizar sugerencias cuando cambia la categoría
         this.WhenAnyValue(x => x.Category)
@@ -79,10 +74,10 @@ public class AddEditTransactionViewModel : ViewModelBase
     };
 
     // Comandos
-    public ReactiveCommand<System.Reactive.Unit, System.Reactive.Unit> SaveCommand { get; }
-    public ReactiveCommand<System.Reactive.Unit, System.Reactive.Unit> CancelCommand { get; }
-    public ReactiveCommand<string, System.Reactive.Unit> SelectSubcategoryCommand { get; }
-    public ReactiveCommand<System.Reactive.Unit, System.Reactive.Unit> ClearSubcategoryCommand { get; }
+    public ICommand SaveCommand { get; }
+    public ICommand CancelCommand { get; }
+    public ICommand SelectSubcategoryCommand { get; }
+    public ICommand ClearSubcategoryCommand { get; }
 
     // Observables
     public IObservable<System.Reactive.Unit> TransactionSaved => _transactionSaved.AsObservable();
@@ -160,19 +155,30 @@ public class AddEditTransactionViewModel : ViewModelBase
         }
     }
 
-    private void Cancel()
+    private bool CanSave()
     {
-        _cancelled.OnNext(System.Reactive.Unit.Default);
+        return !string.IsNullOrWhiteSpace(Description) && Amount > 0 && !IsBusy;
     }
 
-    private void SelectSubcategory(string subcategory)
+    private async Task CancelAsync()
     {
-        Subcategory = subcategory;
+        await Task.Run(() => _cancelled.OnNext(System.Reactive.Unit.Default));
     }
 
-    private void ClearSubcategory()
+    private async Task SelectSubcategoryAsync(string? subcategory)
     {
-        Subcategory = null;
+        await Task.Run(() => 
+        {
+            UIThreadHelper.InvokeOnUIThread(() => Subcategory = subcategory);
+        });
+    }
+
+    private async Task ClearSubcategoryAsync()
+    {
+        await Task.Run(() => 
+        {
+            UIThreadHelper.InvokeOnUIThread(() => Subcategory = null);
+        });
     }
 
     private void UpdateSuggestedSubcategories(Category category)

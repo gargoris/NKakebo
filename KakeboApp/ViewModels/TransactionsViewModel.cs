@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
@@ -32,12 +31,12 @@ public class TransactionsViewModel : ViewModelBase
         Transactions = new ThreadSafeObservableCollection<Transaction>();
         FilteredTransactions = new ThreadSafeObservableCollection<Transaction>();
 
-        // Comandos con manejo de errores
+        // Comandos con manejo de errores - usando AsyncCommand para evitar problemas de threading con ReactiveCommand
         RefreshDataCommand = new AsyncCommand(LoadTransactions, null, ex => HandleException(ex, "Error al cargar transacciones"));
-        AddTransactionCommand = ReactiveCommand.Create(AddTransaction, outputScheduler: RxApp.MainThreadScheduler);
-        EditTransactionCommand = ReactiveCommand.Create<Transaction>(EditTransaction, outputScheduler: RxApp.MainThreadScheduler);
+        AddTransactionCommand = new AsyncCommand(AddTransactionAsync, () => !IsBusy, ex => HandleException(ex, "Error al agregar transacción"));
+        EditTransactionCommand = new AsyncCommand<Transaction>(EditTransactionAsync, _ => !IsBusy, ex => HandleException(ex, "Error al editar transacción"));
         DeleteTransactionCommand = new AsyncCommand<Transaction>(DeleteTransaction, null, ex => HandleException(ex, "Error al eliminar transacción"));
-        CloseEditPanelCommand = ReactiveCommand.Create(CloseEditPanel, outputScheduler: RxApp.MainThreadScheduler);
+        CloseEditPanelCommand = new AsyncCommand(CloseEditPanelAsync, null, ex => HandleException(ex, "Error al cerrar panel"));
 
         // ViewModel de edición
         AddEditViewModel = new AddEditTransactionViewModel(_transactionService);
@@ -46,7 +45,7 @@ public class TransactionsViewModel : ViewModelBase
             .Subscribe(_ => OnTransactionSaved());
         AddEditViewModel.Cancelled
             .ObserveOn(RxApp.MainThreadScheduler)
-            .Subscribe(_ => CloseEditPanel());
+            .Subscribe(async _ => await CloseEditPanelAsync());
 
         // Filtros reactivos
         this.WhenAnyValue(x => x.SearchText, x => x.FilterCategory, x => x.FilterType)
@@ -63,11 +62,41 @@ public class TransactionsViewModel : ViewModelBase
     public ThreadSafeObservableCollection<Transaction> FilteredTransactions { get; }
     public AddEditTransactionViewModel AddEditViewModel { get; }
 
-    [Reactive] public Transaction? SelectedTransaction { get; set; }
-    [Reactive] public bool IsEditPanelVisible { get; set; }
-    [Reactive] public string SearchText { get; set; } = string.Empty;
-    [Reactive] public Category? FilterCategory { get; set; }
-    [Reactive] public TransactionType? FilterType { get; set; }
+    private Transaction? _selectedTransaction;
+    private bool _isEditPanelVisible;
+    private string _searchText = string.Empty;
+    private Category? _filterCategory;
+    private TransactionType? _filterType;
+    
+    public Transaction? SelectedTransaction 
+    { 
+        get => _selectedTransaction; 
+        set => this.RaiseAndSetIfChanged(ref _selectedTransaction, value); 
+    }
+    
+    public bool IsEditPanelVisible 
+    { 
+        get => _isEditPanelVisible; 
+        set => this.RaiseAndSetIfChanged(ref _isEditPanelVisible, value); 
+    }
+    
+    public string SearchText 
+    { 
+        get => _searchText; 
+        set => this.RaiseAndSetIfChanged(ref _searchText, value); 
+    }
+    
+    public Category? FilterCategory 
+    { 
+        get => _filterCategory; 
+        set => this.RaiseAndSetIfChanged(ref _filterCategory, value); 
+    }
+    
+    public TransactionType? FilterType 
+    { 
+        get => _filterType; 
+        set => this.RaiseAndSetIfChanged(ref _filterType, value); 
+    }
 
     // Propiedades para UI
     public IEnumerable<Category> AllCategories => Enum.GetValues<Category>();
@@ -75,10 +104,10 @@ public class TransactionsViewModel : ViewModelBase
 
     // Comandos
     public ICommand RefreshDataCommand { get; }
-    public ReactiveCommand<Unit, Unit> AddTransactionCommand { get; }
-    public ReactiveCommand<Transaction, Unit> EditTransactionCommand { get; }
+    public ICommand AddTransactionCommand { get; }
+    public ICommand EditTransactionCommand { get; }
     public ICommand DeleteTransactionCommand { get; }
-    public ReactiveCommand<Unit, Unit> CloseEditPanelCommand { get; }
+    public ICommand CloseEditPanelCommand { get; }
 
     // Método de inicialización
     public async Task Initialize()
@@ -101,35 +130,29 @@ public class TransactionsViewModel : ViewModelBase
         }, "LoadTransactions");
     }
 
-    private void AddTransaction()
+    private async Task AddTransactionAsync()
     {
-        UIThreadHelper.InvokeOnUIThread(() =>
+        await Task.Run(() =>
         {
-            try
+            UIThreadHelper.InvokeOnUIThread(() =>
             {
                 AddEditViewModel.StartAdd();
                 IsEditPanelVisible = true;
-            }
-            catch (Exception ex)
-            {
-                HandleException(ex, "AddTransaction");
-            }
+            });
         });
     }
 
-    private void EditTransaction(Transaction transaction)
+    private async Task EditTransactionAsync(Transaction? transaction)
     {
-        UIThreadHelper.InvokeOnUIThread(() =>
+        if (transaction == null) return;
+        
+        await Task.Run(() =>
         {
-            try
+            UIThreadHelper.InvokeOnUIThread(() =>
             {
                 AddEditViewModel.StartEdit(transaction);
                 IsEditPanelVisible = true;
-            }
-            catch (Exception ex)
-            {
-                HandleException(ex, "EditTransaction");
-            }
+            });
         });
     }
 
@@ -144,19 +167,22 @@ public class TransactionsViewModel : ViewModelBase
         }, "DeleteTransaction");
     }
 
-    private void CloseEditPanel()
+    private async Task CloseEditPanelAsync()
     {
-        UIThreadHelper.InvokeOnUIThread(() =>
+        await Task.Run(() =>
         {
-            IsEditPanelVisible = false;
-            SelectedTransaction = null;
+            UIThreadHelper.InvokeOnUIThread(() =>
+            {
+                IsEditPanelVisible = false;
+                SelectedTransaction = null;
+            });
         });
     }
 
     private async void OnTransactionSaved()
     {
         await LoadTransactions();
-        CloseEditPanel();
+        await CloseEditPanelAsync();
     }
 
     private void ApplyFilters()
